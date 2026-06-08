@@ -15,15 +15,37 @@ const TeamFlag = ({ flag, name, className = "w-5 h-5 md:w-6 md:h-6" }: { flag?: 
   return <span className="text-base">{flag}</span>
 }
 
-// Fallback por si acaso, aunque los leeremos de Supabase
-const INITIAL_GROUPS: Record<string, Team[]> = {
-  A: [{name: 'México', flag: '🇲🇽', group_letter: 'A'}, {name: 'Alemania', flag: '🇩🇪', group_letter: 'A'}],
+// Sacamos el cerebro de la FIFA afuera para que el useEffect pueda usarlo al cargar
+const solveThirdPlaceMatrix = (thirds: Team[]): Team[] => {
+  const slots = [
+    ['A','B','C','D','F'], // M74
+    ['C','D','F','G','H'], // M77
+    ['C','E','F','H','I'], // M79
+    ['E','H','I','J','K'], // M80
+    ['B','E','F','I','J'], // M81
+    ['A','E','H','I','J'], // M82
+    ['E','F','G','I','J'], // M85
+    ['D','E','I','J','L']  // M87
+  ]
+  let result: Team[] | null = null;
+  const backtrack = (index: number, current: Team[], used: Set<string>) => {
+    if (result) return;
+    if (index === 8) { result = [...current]; return; }
+    for (const team of thirds) {
+      const letter = team.group_letter || '';
+      if (!used.has(letter) && slots[index].includes(letter)) {
+        used.add(letter); current.push(team); backtrack(index + 1, current, used); current.pop(); used.delete(letter);
+      }
+    }
+  }
+  backtrack(0, [], new Set());
+  return result || thirds;
 }
 
 export default function BracketPredictor() {
   const router = useRouter()
   const [isBrowser, setIsBrowser] = useState(false)
-  const [groups, setGroups] = useState<Record<string, Team[]>>(INITIAL_GROUPS)
+  const [groups, setGroups] = useState<Record<string, Team[]>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   
@@ -34,22 +56,72 @@ export default function BracketPredictor() {
   useEffect(() => {
     const timer = setTimeout(() => setIsBrowser(true), 0)
     
-    const fetchTeams = async () => {
-      const { data, error } = await supabase.from('teams').select('*').order('group_letter', { ascending: true })
-      if (data && !error && data.length > 0) {
-        const grouped: Record<string, Team[]> = {}
-        data.forEach((team) => {
-          if (!grouped[team.group_letter]) grouped[team.group_letter] = []
-          grouped[team.group_letter].push({ name: team.name, flag: team.flag, group_letter: team.group_letter })
-        })
-        setGroups(grouped)
+    const fetchInitialData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/')
+        return
       }
+
+      // 1. Cargamos los equipos base oficiales
+      const { data: teamsData, error } = await supabase.from('teams').select('*').order('group_letter', { ascending: true })
+      let currentGroups: Record<string, Team[]> = {}
+      
+      if (teamsData && !error && teamsData.length > 0) {
+        teamsData.forEach((team) => {
+          if (!currentGroups[team.group_letter]) currentGroups[team.group_letter] = []
+          currentGroups[team.group_letter].push({ name: team.name, flag: team.flag, group_letter: team.group_letter })
+        })
+        setGroups(currentGroups)
+      }
+
+      // 2. LÓGICA DE RECUPERACIÓN: Buscamos si el usuario ya tiene un bracket guardado
+      const { data: userBracket } = await supabase.from('brackets').select('*').eq('user_id', session.user.id).single()
+      
+      if (userBracket) {
+        // Restauramos los grupos y los terceros
+        if (userBracket.group_standings) {
+          setGroups(userBracket.group_standings)
+          currentGroups = userBracket.group_standings // Usamos esto para el árbol
+        }
+        if (userBracket.selected_thirds) setSelectedThirds(userBracket.selected_thirds)
+        if (userBracket.knockout_picks) setPicks(userBracket.knockout_picks)
+
+        // Si ya había generado el árbol (tenía 8 terceros), lo reconstruimos visualmente
+        if (userBracket.selected_thirds && userBracket.selected_thirds.length === 8) {
+          const t = (letter: string, pos: number) => currentGroups[letter]?.[pos] || null
+          const thirdsMap = solveThirdPlaceMatrix(userBracket.selected_thirds)
+          const t3 = (slotIndex: number) => thirdsMap[slotIndex]
+
+          const matches: Matchup[] = []
+          matches.push({ team1: t('E', 0), team2: t3(0) })          
+          matches.push({ team1: t('I', 0), team2: t3(1) })          
+          matches.push({ team1: t('A', 1), team2: t('B', 1) })      
+          matches.push({ team1: t('F', 0), team2: t('C', 1) })      
+          matches.push({ team1: t('K', 1), team2: t('L', 1) })      
+          matches.push({ team1: t('H', 0), team2: t('J', 1) })      
+          matches.push({ team1: t('D', 0), team2: t3(4) })          
+          matches.push({ team1: t('G', 0), team2: t3(5) })          
+
+          matches.push({ team1: t('C', 0), team2: t('F', 1) })      
+          matches.push({ team1: t('E', 1), team2: t('I', 1) })      
+          matches.push({ team1: t('A', 0), team2: t3(2) })          
+          matches.push({ team1: t('L', 0), team2: t3(3) })          
+          matches.push({ team1: t('J', 0), team2: t('H', 1) })      
+          matches.push({ team1: t('D', 1), team2: t('G', 1) })      
+          matches.push({ team1: t('B', 0), team2: t3(6) })          
+          matches.push({ team1: t('K', 0), team2: t3(7) })          
+
+          setRoundOf32(matches)
+        }
+      }
+      
       setLoading(false)
     }
 
-    fetchTeams()
+    fetchInitialData()
     return () => clearTimeout(timer)
-  }, [])
+  }, [router])
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return
@@ -76,33 +148,6 @@ export default function BracketPredictor() {
     }
   }
 
-  // EL CEREBRO DE LA FIFA: Simula la matriz de 495 combinaciones en tiempo real
-  const solveThirdPlaceMatrix = (thirds: Team[]): Team[] => {
-    const slots = [
-      ['A','B','C','D','F'], // M74
-      ['C','D','F','G','H'], // M77
-      ['C','E','F','H','I'], // M79
-      ['E','H','I','J','K'], // M80
-      ['B','E','F','I','J'], // M81
-      ['A','E','H','I','J'], // M82
-      ['E','F','G','I','J'], // M85
-      ['D','E','I','J','L']  // M87
-    ]
-    let result: Team[] | null = null;
-    const backtrack = (index: number, current: Team[], used: Set<string>) => {
-      if (result) return;
-      if (index === 8) { result = [...current]; return; }
-      for (const team of thirds) {
-        const letter = team.group_letter || '';
-        if (!used.has(letter) && slots[index].includes(letter)) {
-          used.add(letter); current.push(team); backtrack(index + 1, current, used); current.pop(); used.delete(letter);
-        }
-      }
-    }
-    backtrack(0, [], new Set());
-    return result || thirds;
-  }
-
   const generateBracket = () => {
     const t = (letter: string, pos: number) => groups[letter][pos]
     const thirdsMap = solveThirdPlaceMatrix(selectedThirds)
@@ -110,26 +155,23 @@ export default function BracketPredictor() {
 
     const matches: Matchup[] = []
 
-    // --- LADO IZQUIERDO DEL ÁRBOL (Partidos: 74, 77, 73, 75, 83, 84, 81, 82) ---
-    matches.push({ team1: t('E', 0), team2: t3(0) })          // M74
-    matches.push({ team1: t('I', 0), team2: t3(1) })          // M77
-    matches.push({ team1: t('A', 1), team2: t('B', 1) })      // M73
-    matches.push({ team1: t('F', 0), team2: t('C', 1) })      // M75
-    matches.push({ team1: t('K', 1), team2: t('L', 1) })      // M83
-    matches.push({ team1: t('H', 0), team2: t('J', 1) })      // M84
-    matches.push({ team1: t('D', 0), team2: t3(4) })          // M81
-    matches.push({ team1: t('G', 0), team2: t3(5) })          // M82
+    matches.push({ team1: t('E', 0), team2: t3(0) })          
+    matches.push({ team1: t('I', 0), team2: t3(1) })          
+    matches.push({ team1: t('A', 1), team2: t('B', 1) })      
+    matches.push({ team1: t('F', 0), team2: t('C', 1) })      
+    matches.push({ team1: t('K', 1), team2: t('L', 1) })      
+    matches.push({ team1: t('H', 0), team2: t('J', 1) })      
+    matches.push({ team1: t('D', 0), team2: t3(4) })          
+    matches.push({ team1: t('G', 0), team2: t3(5) })          
 
-    // --- LADO DERECHO DEL ÁRBOL (Partidos: 76, 78, 79, 80, 86, 88, 85, 87) ---
-    // NOTA: El cruce M76 oficial es 1C vs 2F (arreglado del error de tipeo en tu fuente)
-    matches.push({ team1: t('C', 0), team2: t('F', 1) })      // M76
-    matches.push({ team1: t('E', 1), team2: t('I', 1) })      // M78
-    matches.push({ team1: t('A', 0), team2: t3(2) })          // M79
-    matches.push({ team1: t('L', 0), team2: t3(3) })          // M80
-    matches.push({ team1: t('J', 0), team2: t('H', 1) })      // M86
-    matches.push({ team1: t('D', 1), team2: t('G', 1) })      // M88
-    matches.push({ team1: t('B', 0), team2: t3(6) })          // M85
-    matches.push({ team1: t('K', 0), team2: t3(7) })          // M87
+    matches.push({ team1: t('C', 0), team2: t('F', 1) })      
+    matches.push({ team1: t('E', 1), team2: t('I', 1) })      
+    matches.push({ team1: t('A', 0), team2: t3(2) })          
+    matches.push({ team1: t('L', 0), team2: t3(3) })          
+    matches.push({ team1: t('J', 0), team2: t('H', 1) })      
+    matches.push({ team1: t('D', 1), team2: t('G', 1) })      
+    matches.push({ team1: t('B', 0), team2: t3(6) })          
+    matches.push({ team1: t('K', 0), team2: t3(7) })          
 
     setRoundOf32(matches)
     setPicks([
@@ -151,8 +193,8 @@ export default function BracketPredictor() {
   const getMatch = (roundIndex: number, matchIndex: number): Matchup => {
     if (roundIndex === 0) return roundOf32[matchIndex]
     return {
-      team1: picks[roundIndex - 1][matchIndex * 2] || null,
-      team2: picks[roundIndex - 1][matchIndex * 2 + 1] || null
+      team1: picks[roundIndex - 1]?.[matchIndex * 2] || null,
+      team2: picks[roundIndex - 1]?.[matchIndex * 2 + 1] || null
     }
   }
 
@@ -179,7 +221,7 @@ export default function BracketPredictor() {
         {Array.from({length: count}).map((_, i) => {
           const matchIndex = startIndex + i;
           const match = getMatch(roundIndex, matchIndex);
-          const winner = picks[roundIndex] ? picks[roundIndex][matchIndex] : null;
+          const winner = picks[roundIndex]?.[matchIndex] || null;
           return (
             <div key={i} className="flex items-center justify-center w-full">
               <MatchupNode match={match} winner={winner} onSelect={(t) => selectWinner(roundIndex, matchIndex, t)} />
@@ -191,7 +233,7 @@ export default function BracketPredictor() {
   )
 
   if (!isBrowser) return null
-  if (loading) return <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center font-bold text-xl animate-pulse">Cargando datos oficiales de la FIFA...</div>
+  if (loading) return <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center font-bold text-xl animate-pulse">Cargando tu progreso...</div>
 
   return (
     <main className="min-h-screen bg-slate-900 text-white p-2 md:p-6">

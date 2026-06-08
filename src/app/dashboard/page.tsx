@@ -32,7 +32,7 @@ interface GroupPrediction {
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [totalPoints, setTotalPoints] = useState(0)
-  const [role, setRole] = useState<string>('user') // NUEVO: Estado para el rol
+  const [role, setRole] = useState<string>('user')
   const [matches, setMatches] = useState<Match[]>([])
   const [predictions, setPredictions] = useState<Record<string, { pred_a: string, pred_b: string }>>({})
   
@@ -50,14 +50,12 @@ export default function Dashboard() {
       }
       setUser(session.user)
       
-      // NUEVO: Traemos el rol junto con los puntos
       const { data: profile } = await supabase.from('profiles').select('total_points, role').eq('id', session.user.id).single()
       if (profile) {
         setTotalPoints(profile.total_points)
         setRole(profile.role)
       }
 
-      // 1. Traer los partidos
       const { data: matchesData } = await supabase
         .from('matches')
         .select('*')
@@ -65,7 +63,6 @@ export default function Dashboard() {
 
       if (matchesData) setMatches(matchesData)
 
-      // 2. Traer TUS predicciones
       const { data: predsData } = await supabase
         .from('match_predictions')
         .select('*')
@@ -79,7 +76,6 @@ export default function Dashboard() {
         setPredictions(loadedPreds)
       }
 
-      // 3. Traer TODAS las predicciones
       const { data: allPreds } = await supabase
         .from('match_predictions')
         .select('match_id, pred_a, pred_b, profiles(username, avatar_url)')
@@ -90,7 +86,6 @@ export default function Dashboard() {
     }
     fetchData()
 
-    // ESCUCHAR CAMBIOS EN TIEMPO REAL
     const channel = supabase
       .channel('partidos-en-vivo')
       .on(
@@ -121,26 +116,34 @@ export default function Dashboard() {
     }))
   }
 
-  const savePrediction = async (matchId: string) => {
-    const pred = predictions[matchId]
-    if (!pred || pred.pred_a === '' || pred.pred_b === '') {
-      alert('Por favor ingresa ambos resultados')
-      return
-    }
-
-    const { error } = await supabase
-      .from('match_predictions')
-      .upsert({
+  // NUEVA FUNCIÓN: Guarda todos los partidos en la pantalla a la vez
+  const saveAllPredictions = async () => {
+    // 1. Recolectamos todas las predicciones que no estén vacías
+    const validPredictions = Object.entries(predictions)
+      .filter(([_, pred]) => pred.pred_a !== '' && pred.pred_b !== '')
+      .map(([matchId, pred]) => ({
         user_id: user?.id,
         match_id: matchId,
         pred_a: parseInt(pred.pred_a),
         pred_b: parseInt(pred.pred_b)
-      }, { onConflict: 'user_id,match_id' })
+      }));
+
+    // 2. Si no llenó nada, no hacemos nada
+    if (validPredictions.length === 0) {
+      alert('Por favor ingresa ambos resultados en al menos un partido antes de guardar.')
+      return
+    }
+
+    // 3. Enviamos TODA la lista en un solo viaje a Supabase
+    const { error } = await supabase
+      .from('match_predictions')
+      .upsert(validPredictions, { onConflict: 'user_id,match_id' })
 
     if (error) {
       alert('Error al guardar: ' + error.message)
     } else {
-      alert('¡Predicción guardada! ⚽')
+      alert(`¡${validPredictions.length} predicciones guardadas con éxito! ⚽`)
+      // Refrescamos la lista global
       const { data: allPreds } = await supabase.from('match_predictions').select('match_id, pred_a, pred_b, profiles(username, avatar_url)')
       if (allPreds) setGroupPredictions(allPreds as unknown as GroupPrediction[])
     }
@@ -165,7 +168,6 @@ export default function Dashboard() {
           </div>
           
           <div className="flex flex-wrap gap-2 md:gap-3 justify-start md:justify-end w-full md:w-auto">
-            {/* NUEVO: Botón del Bracket */}
             <button onClick={() => router.push('/bracket')} className="bg-sky-500/10 text-sky-400 px-4 py-2 rounded-lg hover:bg-sky-500/20 transition-colors font-semibold border border-sky-500/20 text-sm md:text-base flex-1 md:flex-none">
               Bracket 🌳
             </button>
@@ -181,7 +183,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* NUEVO: BANNER DE ADMINISTRADOR */}
         {role === 'admin' && (
           <div className="mb-8 p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3">
@@ -200,7 +201,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        <h3 className="text-2xl font-bold mb-4 border-b border-slate-700 pb-2">Calendario Oficial</h3>
+        {/* Botón Global de Guardado (opcional, para mayor comodidad) */}
+        <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-2">
+          <h3 className="text-2xl font-bold">Calendario Oficial</h3>
+          <button onClick={saveAllPredictions} className="hidden md:block bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-500 transition-colors text-sm shadow-lg">
+            💾 Guardar Cambios
+          </button>
+        </div>
         
         <div className="flex flex-col gap-4">
           {matches.map((match) => {
@@ -259,8 +266,8 @@ export default function Dashboard() {
 
                   <div className="w-full md:w-44 shrink-0 flex justify-center md:justify-end">
                     {!hasStarted ? (
-                      <button onClick={() => savePrediction(match.id)} className="bg-emerald-500 text-slate-900 font-bold py-2 px-6 rounded-lg hover:bg-emerald-400 transition-colors w-full md:w-auto">
-                        Guardar
+                      <button onClick={saveAllPredictions} className="bg-emerald-500 text-slate-900 font-bold py-2 px-6 rounded-lg hover:bg-emerald-400 transition-colors w-full md:w-auto shadow-md">
+                        Guardar Todas
                       </button>
                     ) : (
                       <button 
@@ -297,6 +304,14 @@ export default function Dashboard() {
             )
           })}
         </div>
+
+        {/* Botón flotante para móvil */}
+        <button 
+          onClick={saveAllPredictions} 
+          className="md:hidden fixed bottom-6 right-6 bg-emerald-500 text-emerald-950 font-black p-4 rounded-full shadow-lg shadow-emerald-900/50 hover:scale-110 transition-transform z-50"
+        >
+          💾
+        </button>
 
       </div>
     </main>
