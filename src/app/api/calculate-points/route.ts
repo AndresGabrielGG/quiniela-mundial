@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         for (const pred of predictions) {
           let puntosGanados = 0;
 
-          // Variables de ayuda para que el código sea fácil de leer
+          // Variables de ayuda
           const acertoMarcadorExacto = pred.pred_a === match.score_a && pred.pred_b === match.score_b;
           
           const acertoGanador = 
@@ -46,28 +46,33 @@ export async function GET(request: Request) {
 
           // --- EL NUEVO SISTEMA DE PUNTOS 3-2-1 ---
           if (acertoMarcadorExacto) {
-            puntosGanados = 3; // Nivel 1: Perfección
+            puntosGanados = 3; 
           } 
           else if (acertoGanador && acertoGolesDeUnEquipo) {
-            puntosGanados = 2; // Nivel 2: Ganador + 1 Marcador
+            puntosGanados = 2; 
           } 
           else if (acertoGanador) {
-            puntosGanados = 1; // Nivel 3: Solo el ganador
+            puntosGanados = 1; 
           }
 
-          // Si ganó algo, se lo sumamos
+          // Si ganó algo, se lo sumamos A AMBAS COLUMNAS
           if (puntosGanados > 0) {
             const { data: userProfile } = await supabase
               .from('profiles')
-              .select('total_points')
+              // Traemos ambos puntajes actuales
+              .select('total_points, points_quiniela')
               .eq('id', pred.user_id)
               .single()
 
-            const currentPoints = userProfile?.total_points || 0;
+            const currentTotal = userProfile?.total_points || 0;
+            const currentQuiniela = userProfile?.points_quiniela || 0;
 
             await supabase
               .from('profiles')
-              .update({ total_points: currentPoints + puntosGanados })
+              .update({ 
+                total_points: currentTotal + puntosGanados,
+                points_quiniela: currentQuiniela + puntosGanados
+              })
               .eq('id', pred.user_id)
           }
         }

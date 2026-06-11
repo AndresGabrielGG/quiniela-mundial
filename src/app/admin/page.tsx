@@ -86,15 +86,24 @@ export default function AdminPanel() {
     initAdmin()
   }, [router])
 
+  // --- CONEXIÓN REAL A TU API DE SINCRONIZACIÓN ---
   const handleApiSync = async () => {
     setSyncing(true)
     try {
-      const res = await fetch('https://api.football-data.org/v4/competitions/2000/standings', { headers: { 'X-Auth-Token': API_TOKEN } })
-      if (!res.ok) throw new Error("Error en la conexión con la API.")
-      alert("¡Conexión exitosa a football-data.org! Los datos se sincronizarán cuando el torneo esté activo.")
+      // Reemplaza "TU_CRON_SECRET" por la contraseña que pusiste en las variables de entorno de Vercel
+      const res = await fetch('/api/sync-matches?secret=mi_super_contraseña_secreta_123')
+      const data = await res.json()
+      
+      if (!res.ok) throw new Error(data.error || "Error al conectar con la API de sincronización.")
+      
+      // Si todo sale bien, la API actualizará Supabase y tu Dashboard reaccionará solo.
+      alert("✅ " + data.message)
     } catch (error: unknown) {
-      if (error instanceof Error) alert("Aviso: " + error.message)
-      else alert("Ocurrió un error desconocido.")
+      if (error instanceof Error) {
+        alert("Aviso de Sincronización: " + error.message)
+      } else {
+        alert("Ocurrió un error desconocido durante la sincronización.")
+      }
     } finally {
       setSyncing(false)
     }
