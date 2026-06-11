@@ -116,9 +116,7 @@ export default function Dashboard() {
     }))
   }
 
-  // NUEVA FUNCIÓN: Guarda todos los partidos en la pantalla a la vez
   const saveAllPredictions = async () => {
-    // 1. Recolectamos todas las predicciones que no estén vacías
     const validPredictions = Object.entries(predictions)
       .filter(([_, pred]) => pred.pred_a !== '' && pred.pred_b !== '')
       .map(([matchId, pred]) => ({
@@ -128,13 +126,11 @@ export default function Dashboard() {
         pred_b: parseInt(pred.pred_b)
       }));
 
-    // 2. Si no llenó nada, no hacemos nada
     if (validPredictions.length === 0) {
       alert('Por favor ingresa ambos resultados en al menos un partido antes de guardar.')
       return
     }
 
-    // 3. Enviamos TODA la lista en un solo viaje a Supabase
     const { error } = await supabase
       .from('match_predictions')
       .upsert(validPredictions, { onConflict: 'user_id,match_id' })
@@ -143,7 +139,6 @@ export default function Dashboard() {
       alert('Error al guardar: ' + error.message)
     } else {
       alert(`¡${validPredictions.length} predicciones guardadas con éxito! ⚽`)
-      // Refrescamos la lista global
       const { data: allPreds } = await supabase.from('match_predictions').select('match_id, pred_a, pred_b, profiles(username, avatar_url)')
       if (allPreds) setGroupPredictions(allPreds as unknown as GroupPrediction[])
     }
@@ -201,7 +196,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Botón Global de Guardado (opcional, para mayor comodidad) */}
         <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-2">
           <h3 className="text-2xl font-bold">Calendario Oficial</h3>
           <button onClick={saveAllPredictions} className="hidden md:block bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-500 transition-colors text-sm shadow-lg">
@@ -283,19 +277,65 @@ export default function Dashboard() {
                 {hasStarted && expandedMatch === match.id && (
                   <div className="bg-slate-900/50 p-4 border-t border-slate-700 flex flex-wrap gap-4">
                     {matchGroupPreds.length > 0 ? (
-                      matchGroupPreds.map((p, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
-                          {p.profiles?.avatar_url ? (
-                            <img src={p.profiles.avatar_url} alt="avatar" className="w-6 h-6 rounded-full" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-slate-600" />
-                          )}
-                          <span className="text-sm font-semibold text-slate-300">{p.profiles?.username?.split(' ')[0]}</span>
-                          <span className="text-emerald-400 font-bold ml-2">{p.pred_a} - {p.pred_b}</span>
-                        </div>
-                      ))
+                      matchGroupPreds.map((p, idx) => {
+                        // LÓGICA DE COLORES Y PUNTUACIÓN
+                        let pts: number | null = null;
+                        let colorClass = "bg-slate-800 border-slate-700 text-slate-300"; // Por defecto (gris)
+                        let textClass = "text-slate-300";
+
+                        if (match.score_a !== null && match.score_b !== null) {
+                          const acertoMarcador = p.pred_a === match.score_a && p.pred_b === match.score_b;
+                          const acertoGanador = 
+                            (p.pred_a > p.pred_b && match.score_a > match.score_b) || 
+                            (p.pred_a < p.pred_b && match.score_a < match.score_b) || 
+                            (p.pred_a === p.pred_b && match.score_a === match.score_b);
+                          const acertoGoles = p.pred_a === match.score_a || p.pred_b === match.score_b;
+
+                          if (acertoMarcador) pts = 3;
+                          else if (acertoGanador && acertoGoles) pts = 2;
+                          else if (acertoGanador) pts = 1;
+                          else pts = 0;
+
+                          // Asignar colores según los puntos ganados
+                          if (pts === 3) {
+                            colorClass = "bg-emerald-900/20 border-emerald-500/50";
+                            textClass = "text-emerald-400 font-bold";
+                          } else if (pts > 0) {
+                            colorClass = "bg-amber-900/20 border-amber-500/50";
+                            textClass = "text-amber-400 font-bold";
+                          } else {
+                            colorClass = "bg-red-900/20 border-red-500/30";
+                            textClass = "text-red-400 font-semibold";
+                          }
+                        }
+
+                        return (
+                          <div key={idx} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${colorClass}`}>
+                            {p.profiles?.avatar_url ? (
+                              <img src={p.profiles.avatar_url} alt="avatar" className="w-6 h-6 rounded-full border border-slate-600/50" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold text-slate-300">
+                                {p.profiles?.username?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-sm font-semibold text-slate-200">{p.profiles?.username?.split(' ')[0]}</span>
+                            <span className={`ml-2 tracking-widest ${textClass}`}>{p.pred_a} - {p.pred_b}</span>
+                            
+                            {/* Insignia de puntos */}
+                            {pts !== null && (
+                              <span className={`text-[10px] font-black ml-1 px-1.5 py-0.5 rounded shadow-sm ${
+                                pts === 3 ? 'bg-emerald-500/20 text-emerald-400' : 
+                                pts > 0 ? 'bg-amber-500/20 text-amber-400' : 
+                                'bg-red-500/10 text-red-500/80'
+                              }`}>
+                                +{pts} pts
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })
                     ) : (
-                      <p className="text-sm text-slate-500 w-full text-center">Nadie hizo predicciones para este partido 😴</p>
+                      <p className="text-sm text-slate-500 w-full text-center py-2">Nadie hizo predicciones para este partido 😴</p>
                     )}
                   </div>
                 )}
@@ -305,7 +345,6 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Botón flotante para móvil */}
         <button 
           onClick={saveAllPredictions} 
           className="md:hidden fixed bottom-6 right-6 bg-emerald-500 text-emerald-950 font-black p-4 rounded-full shadow-lg shadow-emerald-900/50 hover:scale-110 transition-transform z-50"
