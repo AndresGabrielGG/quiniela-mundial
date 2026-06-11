@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// 1. Estructura ampliada para encontrar los goles en vivo
 interface FDataMatch {
   id: number;
   utcDate: string;
@@ -10,7 +9,7 @@ interface FDataMatch {
   awayTeam: { name: string; crest: string };
   score: {
     fullTime?: { home: number | null; away: number | null };
-    regularTime?: { home: number | null; away: number | null }; // <- Aquí están los goles en vivo
+    regularTime?: { home: number | null; away: number | null };
   };
 }
 
@@ -36,6 +35,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "No se encontraron partidos" }, { status: 400 });
     }
 
+    // 1. TRAER PARTIDOS ACTUALES DE LA BASE DE DATOS PARA COMPARAR
+    const { data: existingMatches } = await supabase
+      .from('matches')
+      .select('api_fixture_id, score_a, score_b');
+
     let hayPartidosTerminados = false;
 
     // 2. Formateamos los datos
@@ -45,14 +49,24 @@ export async function GET(request: Request) {
       const logoA = match.homeTeam?.crest || '';
       const logoB = match.awayTeam?.crest || '';
       
-      // EL ARREGLO DEL MARCADOR: Buscamos primero en fullTime (si terminó), si no, en regularTime (si está en vivo)
-      const scoreA = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? null;
-      const scoreB = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? null;
+      let apiScoreA = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? null;
+      let apiScoreB = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? null;
+      
+      // BUSCAMOS SI YA TENÍAMOS DATOS EN NUESTRA BASE DE DATOS
+      const existingMatch = existingMatches?.find(m => m.api_fixture_id === match.id);
+
+      // EL ESCUDO ANTI-NULL: Si la API trae null pero tú pusiste un número, conservamos tu número.
+      if (apiScoreA === null && existingMatch?.score_a !== null && existingMatch?.score_a !== undefined) {
+        apiScoreA = existingMatch.score_a;
+      }
+      if (apiScoreB === null && existingMatch?.score_b !== null && existingMatch?.score_b !== undefined) {
+        apiScoreB = existingMatch.score_b;
+      }
       
       const status = match.status === 'FINISHED' ? 'finished' : 'pending';
 
-      // Avisamos si este robot acaba de encontrar un partido que finalizó
-      if (status === 'finished') {
+      // Avisamos si este robot acaba de encontrar un partido que finalizó (y que ya tiene goles válidos)
+      if (status === 'finished' && apiScoreA !== null && apiScoreB !== null) {
         hayPartidosTerminados = true;
       }
 
@@ -63,8 +77,8 @@ export async function GET(request: Request) {
         home_logo: logoA,
         away_logo: logoB,
         kickoff_time: match.utcDate,
-        score_a: scoreA,
-        score_b: scoreB,
+        score_a: apiScoreA,
+        score_b: apiScoreB,
         match_minute: null, 
         full_status: match.status,
         status: status
@@ -78,10 +92,9 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // 4. EL ARREGLO DE LOS PUNTOS: Si hay partidos terminados, llamamos automáticamente a la API de puntos
+    // 4. EL ARREGLO DE LOS PUNTOS: Si hay partidos terminados y con goles, llamamos automáticamente a la API de puntos
     if (hayPartidosTerminados) {
       const calculateUrl = `${url.origin}/api/calculate-points?secret=${secret}`;
-      // Hacemos el llamado sin esperar respuesta (fire-and-forget) para que sea instantáneo
       fetch(calculateUrl).catch(e => console.error("Error al autocalcular puntos:", e));
     }
 
