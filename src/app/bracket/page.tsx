@@ -9,23 +9,19 @@ import { supabase } from '@/lib/supabase'
 interface Team { name: string; flag: string; group_letter?: string; }
 interface Matchup { team1: Team | null; team2: Team | null; }
 
+// FECHA DE BLOQUEO OFICIAL (11 de Junio de 2026 a las 15:00 UTC)
+const TOURNAMENT_START = new Date('2026-06-12T00:00:00Z')
+
 const TeamFlag = ({ flag, name, className = "w-5 h-5 md:w-6 md:h-6" }: { flag?: string, name?: string, className?: string }) => {
   if (!flag) return <span className="text-base">❔</span>
   if (flag.startsWith('http')) return <img src={flag} alt={name} className={`object-contain ${className}`} />
   return <span className="text-base">{flag}</span>
 }
 
-// Sacamos el cerebro de la FIFA afuera para que el useEffect pueda usarlo al cargar
 const solveThirdPlaceMatrix = (thirds: Team[]): Team[] => {
   const slots = [
-    ['A','B','C','D','F'], // M74
-    ['C','D','F','G','H'], // M77
-    ['C','E','F','H','I'], // M79
-    ['E','H','I','J','K'], // M80
-    ['B','E','F','I','J'], // M81
-    ['A','E','H','I','J'], // M82
-    ['E','F','G','I','J'], // M85
-    ['D','E','I','J','L']  // M87
+    ['A','B','C','D','F'], ['C','D','F','G','H'], ['C','E','F','H','I'], ['E','H','I','J','K'], 
+    ['B','E','F','I','J'], ['A','E','H','I','J'], ['E','F','G','I','J'], ['D','E','I','J','L']
   ]
   let result: Team[] | null = null;
   const backtrack = (index: number, current: Team[], used: Set<string>) => {
@@ -53,6 +49,9 @@ export default function BracketPredictor() {
   const [roundOf32, setRoundOf32] = useState<Matchup[]>([])
   const [picks, setPicks] = useState<(Team | null)[][]>([])
 
+  // VERIFICACIÓN DEL CANDADO
+  const isLocked = new Date() > TOURNAMENT_START
+
   useEffect(() => {
     const timer = setTimeout(() => setIsBrowser(true), 0)
     
@@ -63,7 +62,6 @@ export default function BracketPredictor() {
         return
       }
 
-      // 1. Cargamos los equipos base oficiales
       const { data: teamsData, error } = await supabase.from('teams').select('*').order('group_letter', { ascending: true })
       let currentGroups: Record<string, Team[]> = {}
       
@@ -75,19 +73,16 @@ export default function BracketPredictor() {
         setGroups(currentGroups)
       }
 
-      // 2. LÓGICA DE RECUPERACIÓN: Buscamos si el usuario ya tiene un bracket guardado
       const { data: userBracket } = await supabase.from('brackets').select('*').eq('user_id', session.user.id).single()
       
       if (userBracket) {
-        // Restauramos los grupos y los terceros
         if (userBracket.group_standings) {
           setGroups(userBracket.group_standings)
-          currentGroups = userBracket.group_standings // Usamos esto para el árbol
+          currentGroups = userBracket.group_standings 
         }
         if (userBracket.selected_thirds) setSelectedThirds(userBracket.selected_thirds)
         if (userBracket.knockout_picks) setPicks(userBracket.knockout_picks)
 
-        // Si ya había generado el árbol (tenía 8 terceros), lo reconstruimos visualmente
         if (userBracket.selected_thirds && userBracket.selected_thirds.length === 8) {
           const t = (letter: string, pos: number) => currentGroups[letter]?.[pos] || null
           const thirdsMap = solveThirdPlaceMatrix(userBracket.selected_thirds)
@@ -124,7 +119,7 @@ export default function BracketPredictor() {
   }, [router])
 
   const onDragEnd = (result: DropResult) => {
-    if (!result.destination) return
+    if (!result.destination || isLocked) return
     const { source, destination } = result
     const groupLetter = source.droppableId
     const newGroups = { ...groups }
@@ -139,6 +134,7 @@ export default function BracketPredictor() {
   }
 
   const toggleThirdPlace = (team: Team) => {
+    if (isLocked) return
     const isSelected = selectedThirds.some(t => t.name === team.name)
     if (isSelected) {
       setSelectedThirds(selectedThirds.filter(t => t.name !== team.name))
@@ -149,6 +145,7 @@ export default function BracketPredictor() {
   }
 
   const generateBracket = () => {
+    if (isLocked) return
     const t = (letter: string, pos: number) => groups[letter][pos]
     const thirdsMap = solveThirdPlaceMatrix(selectedThirds)
     const t3 = (slotIndex: number) => thirdsMap[slotIndex]
@@ -181,6 +178,7 @@ export default function BracketPredictor() {
   }
 
   const selectWinner = (roundIndex: number, matchIndex: number, winner: Team) => {
+    if (isLocked) return
     const newPicks = [...picks.map(r => [...r])]
     newPicks[roundIndex][matchIndex] = winner
     for (let r = roundIndex + 1; r < newPicks.length; r++) {
@@ -199,6 +197,7 @@ export default function BracketPredictor() {
   }
 
   const handleSaveBracket = async () => {
+    if (isLocked) { alert("El torneo ya empezó. No se pueden guardar cambios."); return; }
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { alert("Debes iniciar sesión para guardar."); setSaving(false); return; }
@@ -224,7 +223,7 @@ export default function BracketPredictor() {
           const winner = picks[roundIndex]?.[matchIndex] || null;
           return (
             <div key={i} className="flex items-center justify-center w-full">
-              <MatchupNode match={match} winner={winner} onSelect={(t) => selectWinner(roundIndex, matchIndex, t)} />
+              <MatchupNode match={match} winner={winner} onSelect={(t) => selectWinner(roundIndex, matchIndex, t)} isLocked={isLocked} />
             </div>
           )
         })}
@@ -243,24 +242,31 @@ export default function BracketPredictor() {
           <Link href="/dashboard" className="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-700 font-semibold">Volver</Link>
         </div>
 
+        {/* BANNER DE BLOQUEO */}
+        {isLocked && (
+          <div className="bg-red-900/20 border border-red-800 text-red-300 p-4 rounded-lg mb-8 text-center mx-2 font-bold shadow-lg">
+            El torneo ya ha comenzado. Tu bracket está bloqueado y ya no puede ser modificado 🔒
+          </div>
+        )}
+
         {Object.keys(groups).length > 0 && (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8 px-2">
               {Object.entries(groups).map(([letter, teams]) => (
                 <div key={letter} className="bg-slate-800 rounded-xl p-3 border border-slate-700 shadow-lg">
                   <h3 className="text-base font-bold text-amber-400 mb-2 border-b border-slate-700 pb-1">Grupo {letter}</h3>
-                  <Droppable droppableId={letter}>
+                  <Droppable droppableId={letter} isDropDisabled={isLocked}>
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-1.5 min-h-[140px]">
                         {teams.map((team, idx) => (
-                          <Draggable key={team.name} draggableId={team.name} index={idx}>
+                          <Draggable key={team.name} draggableId={team.name} index={idx} isDragDisabled={isLocked}>
                             {(provided, snapshot) => (
                               <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}
-                                className={`flex items-center gap-3 p-2 rounded border transition-colors text-sm ${snapshot.isDragging ? 'bg-slate-700 border-sky-500 z-50 shadow-xl' : 'bg-slate-900'} ${idx < 2 && !snapshot.isDragging ? 'border-emerald-500/50' : idx === 2 && !snapshot.isDragging ? 'border-amber-500/50' : 'border-slate-700'}`}>
+                                className={`flex items-center gap-3 p-2 rounded border transition-colors text-sm ${snapshot.isDragging ? 'bg-slate-700 border-sky-500 z-50 shadow-xl' : 'bg-slate-900'} ${idx < 2 && !snapshot.isDragging ? 'border-emerald-500/50' : idx === 2 && !snapshot.isDragging ? 'border-amber-500/50' : 'border-slate-700'} ${isLocked ? 'opacity-80 cursor-not-allowed' : ''}`}>
                                 <span className={`font-bold w-4 text-center ${idx < 2 ? 'text-emerald-400' : idx === 2 ? 'text-amber-400' : 'text-slate-600'}`}>{idx + 1}</span>
                                 <TeamFlag flag={team.flag} name={team.name} />
                                 <span className="flex-1 truncate">{team.name}</span>
-                                <span className="text-slate-500 cursor-grab px-1">≡</span>
+                                {!isLocked && <span className="text-slate-500 cursor-grab px-1">≡</span>}
                               </div>
                             )}
                           </Draggable>
@@ -281,7 +287,7 @@ export default function BracketPredictor() {
             if (!third) return null
             const isSelected = selectedThirds.some(t => t.name === third.name)
             return (
-              <button key={letter} onClick={() => toggleThirdPlace(third)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors border ${isSelected ? 'bg-amber-500 text-slate-900 font-bold border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-600 hover:border-amber-500/50'}`}>
+              <button key={letter} onClick={() => toggleThirdPlace(third)} disabled={isLocked} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors border ${isSelected ? 'bg-amber-500 text-slate-900 font-bold border-amber-400' : 'bg-slate-900 text-slate-300 border-slate-600'} ${!isLocked && !isSelected ? 'hover:border-amber-500/50' : ''} ${isLocked ? 'cursor-not-allowed opacity-80' : ''}`}>
                 <TeamFlag flag={third.flag} name={third.name} className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="truncate">{third.name}</span>
               </button>
@@ -289,11 +295,13 @@ export default function BracketPredictor() {
           })}
         </div>
 
-        <div className="flex justify-center pb-8 border-b-2 border-slate-700 mx-2">
-          <button onClick={generateBracket} disabled={selectedThirds.length !== 8} className="bg-sky-500 text-slate-900 font-bold py-3 px-8 rounded-xl hover:bg-sky-400 transition-colors disabled:bg-slate-700 disabled:text-slate-500 shadow-lg w-full md:w-auto">
-            {selectedThirds.length === 8 ? 'Generar Fase Eliminatoria 🌳' : `Faltan terceros (${selectedThirds.length}/8)`}
-          </button>
-        </div>
+        {!isLocked && (
+          <div className="flex justify-center pb-8 border-b-2 border-slate-700 mx-2">
+            <button onClick={generateBracket} disabled={selectedThirds.length !== 8} className="bg-sky-500 text-slate-900 font-bold py-3 px-8 rounded-xl hover:bg-sky-400 transition-colors disabled:bg-slate-700 disabled:text-slate-500 shadow-lg w-full md:w-auto">
+              {selectedThirds.length === 8 ? 'Generar Fase Eliminatoria 🌳' : `Faltan terceros (${selectedThirds.length}/8)`}
+            </button>
+          </div>
+        )}
 
         {roundOf32.length > 0 && (
           <div className="mt-8 pb-16 w-full px-2">
@@ -315,7 +323,7 @@ export default function BracketPredictor() {
                   </div>
                   
                   <div className="w-full relative z-10">
-                    <MatchupNode match={getMatch(4, 0)} winner={picks[4] ? picks[4][0] : null} onSelect={(t) => selectWinner(4, 0, t)} />
+                    <MatchupNode match={getMatch(4, 0)} winner={picks[4] ? picks[4][0] : null} onSelect={(t) => selectWinner(4, 0, t)} isLocked={isLocked} />
                   </div>
 
                   <div className="absolute bottom-24 w-full flex flex-col items-center">
@@ -325,9 +333,11 @@ export default function BracketPredictor() {
                       <span className="text-xs font-bold truncate w-full text-center">{picks[4]?.[0]?.name || '...'}</span>
                     </div>
 
-                    <button onClick={handleSaveBracket} disabled={saving} className="w-full bg-emerald-500 text-emerald-950 font-black py-3 px-4 rounded-xl shadow-lg hover:bg-emerald-400 hover:-translate-y-1 transition-all disabled:opacity-50">
-                      {saving ? 'Guardando...' : '💾 GUARDAR BRACKET'}
-                    </button>
+                    {!isLocked && (
+                      <button onClick={handleSaveBracket} disabled={saving} className="w-full bg-emerald-500 text-emerald-950 font-black py-3 px-4 rounded-xl shadow-lg hover:bg-emerald-400 hover:-translate-y-1 transition-all disabled:opacity-50">
+                        {saving ? 'Guardando...' : '💾 GUARDAR BRACKET'}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -344,22 +354,22 @@ export default function BracketPredictor() {
   )
 }
 
-function MatchupNode({ match, winner, onSelect }: { match: Matchup, winner: Team | null, onSelect: (t: Team) => void }) {
+function MatchupNode({ match, winner, onSelect, isLocked }: { match: Matchup, winner: Team | null, onSelect: (t: Team) => void, isLocked: boolean }) {
   const t1 = match?.team1; const t2 = match?.team2;
   const getBtnClass = (team: Team | null) => {
     if (!team) return 'opacity-40 cursor-not-allowed bg-slate-900 text-slate-600'
     if (winner?.name === team.name) return 'bg-sky-600 text-white font-bold'
-    return 'hover:bg-slate-700 text-slate-300'
+    return isLocked ? 'bg-slate-800 text-slate-300' : 'hover:bg-slate-700 text-slate-300'
   }
 
   return (
     <div className="flex flex-col bg-slate-800 border border-slate-700 rounded-md w-full shadow-md shrink-0 overflow-hidden">
-      <button onClick={() => t1 && t2 && onSelect(t1)} disabled={!t1 || !t2} className={`flex items-center gap-2 p-2 transition-colors ${getBtnClass(t1)}`}>
+      <button onClick={() => !isLocked && t1 && t2 && onSelect(t1)} disabled={!t1 || !t2 || isLocked} className={`flex items-center gap-2 p-2 transition-colors ${getBtnClass(t1)} ${isLocked ? 'cursor-default' : ''}`}>
         <TeamFlag flag={t1?.flag} name={t1?.name} className="w-5 h-5" />
         <span className="truncate text-[11px] md:text-xs">{t1 ? t1.name : 'Por definir'}</span>
       </button>
       <div className="h-[1px] bg-slate-900 w-full" />
-      <button onClick={() => t1 && t2 && onSelect(t2)} disabled={!t1 || !t2} className={`flex items-center gap-2 p-2 transition-colors ${getBtnClass(t2)}`}>
+      <button onClick={() => !isLocked && t1 && t2 && onSelect(t2)} disabled={!t1 || !t2 || isLocked} className={`flex items-center gap-2 p-2 transition-colors ${getBtnClass(t2)} ${isLocked ? 'cursor-default' : ''}`}>
         <TeamFlag flag={t2?.flag} name={t2?.name} className="w-5 h-5" />
         <span className="truncate text-[11px] md:text-xs">{t2 ? t2.name : 'Por definir'}</span>
       </button>

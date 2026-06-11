@@ -19,7 +19,7 @@ export default function Premios() {
   "Suecia", "Suiza", "Turquía", "Túnez", "Uruguay", "Uzbekistán"
 ];
   // Fecha en la que arranca el Mundial (Ajusta esto según el calendario oficial)
-  const TOURNAMENT_START = new Date('2026-06-11T15:00:00Z')
+  const TOURNAMENT_START = new Date('2026-06-12T15:00:00Z')
   const isLocked = new Date() > TOURNAMENT_START
 
   const [awards, setAwards] = useState({
