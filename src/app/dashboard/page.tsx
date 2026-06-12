@@ -143,10 +143,9 @@ export default function Dashboard() {
     }
   }
 
-  if (!user) return <p className="min-h-screen bg-black text-white p-8 flex items-center justify-center font-sztos text-3xl tracking-widest">CARGANDO...</p>
+  if (!user) return <p className="min-h-screen bg-black text-white p-8 flex items-center justify-center font-sztos font-bold text-3xl tracking-widest">CARGANDO...</p>
 
   return (
-    // Quitamos font-sztos del contenedor principal para que el texto base sea legible (font-sans)
     <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto">
         
@@ -154,16 +153,15 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111] border-4 border-white p-6 mb-8 gap-6 rounded-none shadow-[8px_8px_0px_#ccff00]">
           <div className="flex items-center gap-4">
             {user.user_metadata.avatar_url && (
-              // Quitamos grayscale
               <Image src={user.user_metadata.avatar_url} alt="Avatar" width={56} height={56} className="border-2 border-white object-cover rounded-full" />
             )}
             <div>
-              <h2 className="text-2xl font-sztos uppercase tracking-wider">{user.user_metadata.full_name}</h2>
+              <h2 className="text-2xl font-sztos font-bold uppercase tracking-wider">{user.user_metadata.full_name}</h2>
               <p className="text-[#ccff00] font-bold text-lg mt-1">{totalPoints} PTS</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-3 w-full md:w-auto font-sztos">
+          <div className="flex flex-wrap gap-3 w-full md:w-auto font-sztos font-normal">
             <button onClick={() => router.push('/bracket')} className="bg-[#5500ff] text-white px-5 py-2 uppercase tracking-wider border-2 border-white hover:bg-white hover:text-black transition-colors flex-1 md:flex-none">
               Bracket
             </button>
@@ -184,19 +182,19 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">⚙️</span>
               <div>
-                <h2 className="font-sztos uppercase tracking-tighter text-2xl">Modo Admin</h2>
+                <h2 className="font-sztos font-bold uppercase tracking-tighter text-2xl">Modo Admin</h2>
                 <p className="text-sm font-bold text-gray-600 font-sans">Acceso al Centro de Mando.</p>
               </div>
             </div>
-            <button onClick={() => router.push('/admin')} className="w-full md:w-auto bg-black text-white font-sztos text-xl py-2 px-6 hover:bg-[#ff004d] transition-colors">
+            <button onClick={() => router.push('/admin')} className="w-full md:w-auto bg-black text-white font-sztos font-normal text-xl py-2 px-6 hover:bg-[#ff004d] transition-colors">
               ENTRAR
             </button>
           </div>
         )}
 
         <div className="flex justify-between items-end mb-6 border-b-4 border-white pb-3">
-          <h3 className="text-3xl md:text-4xl font-sztos text-white tracking-wide">CALENDARIO OFICIAL</h3>
-          <button onClick={saveAllPredictions} className="hidden md:block bg-[#ccff00] text-black font-sztos text-xl py-2 px-6 border-2 border-white hover:bg-white transition-colors">
+          <h3 className="text-3xl md:text-4xl font-sztos font-bold text-white tracking-wide">CALENDARIO OFICIAL</h3>
+          <button onClick={saveAllPredictions} className="hidden md:block bg-[#ccff00] text-black font-sztos font-normal text-xl py-2 px-6 border-2 border-white hover:bg-white transition-colors">
             GUARDAR TODO
           </button>
         </div>
@@ -221,19 +219,18 @@ export default function Dashboard() {
                       {new Date(match.kickoff_time).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} <span className="text-white mx-1">•</span> {new Date(match.kickoff_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     {hasStarted && (
-                      <div className={`mt-1 font-sztos tracking-widest text-lg px-3 py-1 inline-block border-2 border-white ${match.status === 'finished' ? 'bg-white text-black' : 'bg-[#ccff00] text-black animate-pulse'}`}>
+                      <div className={`mt-1 font-sztos font-normal tracking-widest text-lg px-3 py-1 inline-block border-2 border-white ${match.status === 'finished' ? 'bg-white text-black' : 'bg-[#ccff00] text-black animate-pulse'}`}>
                         {match.status === 'finished' ? 'FINAL' : 'EN VIVO'}
                       </div>
                     )}
                   </div>
 
                   {/* EL MARCADOR TIPO BROADCAST TV CORREGIDO PARA MÓVIL */}
-                  {/* En móvil es un rectángulo apilado (rounded-2xl), en escritorio es el óvalo (md:rounded-full) */}
                   <div className="flex flex-col md:flex-row items-stretch md:items-center bg-[#111] border-2 border-white rounded-2xl md:rounded-full flex-1 max-w-2xl w-full justify-center shadow-lg overflow-hidden">
                     
                     {/* EQUIPO A */}
                     <div className="flex items-center justify-center md:justify-end gap-3 flex-1 py-3 px-4 bg-[#1a1a1a] md:bg-transparent border-b-2 md:border-b-0 md:border-r-2 border-[#333]">
-                      <span className="font-sztos tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_a.substring(0, 3).toUpperCase()}</span>
+                      <span className="font-sztos font-bold tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_a.substring(0, 3).toUpperCase()}</span>
                       {match.home_logo && <img src={match.home_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
                     </div>
                     
@@ -243,17 +240,17 @@ export default function Dashboard() {
                         <>
                           <input 
                             type="number" min="0" value={pred.pred_a ?? ''} onChange={(e) => handleInputChange(match.id, 'a', e.target.value)}
-                            className="w-12 h-12 md:w-14 md:h-14 text-center bg-black border-2 border-black font-sztos text-2xl md:text-3xl text-white focus:border-[#ff004d] outline-none transition-all rounded-md" 
+                            className="w-12 h-12 md:w-14 md:h-14 text-center bg-black border-2 border-black font-sztos font-normal text-2xl md:text-3xl text-white focus:border-[#ff004d] outline-none transition-all rounded-md" 
                           />
                           <span className="text-black font-black text-xl">-</span>
                           <input 
                             type="number" min="0" value={pred.pred_b ?? ''} onChange={(e) => handleInputChange(match.id, 'b', e.target.value)}
-                            className="w-12 h-12 md:w-14 md:h-14 text-center bg-black border-2 border-black font-sztos text-2xl md:text-3xl text-white focus:border-[#ff004d] outline-none transition-all rounded-md" 
+                            className="w-12 h-12 md:w-14 md:h-14 text-center bg-black border-2 border-black font-sztos font-normal text-2xl md:text-3xl text-white focus:border-[#ff004d] outline-none transition-all rounded-md" 
                           />
                         </>
                       ) : (
                         <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-3 text-black font-sztos text-4xl md:text-5xl">
+                          <div className="flex items-center gap-3 text-black font-sztos font-normal text-4xl md:text-5xl">
                             <span>{match.score_a ?? 0}</span>
                             <span className="text-gray-300 text-2xl">-</span>
                             <span>{match.score_b ?? 0}</span>
@@ -265,7 +262,7 @@ export default function Dashboard() {
                     {/* EQUIPO B */}
                     <div className="flex items-center justify-center md:justify-start gap-3 flex-1 py-3 px-4 bg-[#1a1a1a] md:bg-transparent border-t-2 md:border-t-0 md:border-l-2 border-[#333]">
                       {match.away_logo && <img src={match.away_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
-                      <span className="font-sztos tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_b.substring(0, 3).toUpperCase()}</span>
+                      <span className="font-sztos font-bold tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_b.substring(0, 3).toUpperCase()}</span>
                     </div>
                   </div>
 
@@ -278,7 +275,7 @@ export default function Dashboard() {
                     )}
 
                     {!hasStarted ? (
-                      <button onClick={saveAllPredictions} className="w-full md:w-auto bg-white text-black font-sztos text-lg tracking-widest py-2 px-6 border-2 border-black hover:bg-[#ccff00] transition-colors mt-2 xl:mt-0">
+                      <button onClick={saveAllPredictions} className="w-full md:w-auto bg-white text-black font-sztos font-normal text-lg tracking-widest py-2 px-6 border-2 border-black hover:bg-[#ccff00] transition-colors mt-2 xl:mt-0">
                         GUARDAR
                       </button>
                     ) : (
@@ -314,7 +311,6 @@ export default function Dashboard() {
                           else if (acertoGanador) pts = 1;
                           else pts = 0;
 
-                          // LÓGICA DE COLORES MUNDIALISTAS VIBRANTES
                           if (pts === 3) {
                             colorClass = "bg-[#ccff00]/10 border-[#ccff00]"; 
                             textClass = "text-[#ccff00] font-black";
@@ -330,18 +326,17 @@ export default function Dashboard() {
                         return (
                           <div key={idx} className={`flex items-center gap-3 px-4 py-2 border-2 transition-all ${colorClass}`}>
                             {p.profiles?.avatar_url ? (
-                              // Quitamos grayscale también aquí
                               <img src={p.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full border border-white/20 object-cover" />
                             ) : (
-                              <div className="w-8 h-8 bg-[#333] flex items-center justify-center font-sztos text-white border border-white/20 rounded-full">
+                              <div className="w-8 h-8 bg-[#333] flex items-center justify-center font-sztos font-bold text-white border border-white/20 rounded-full">
                                 {p.profiles?.username?.charAt(0).toUpperCase()}
                               </div>
                             )}
                             <span className="font-bold uppercase tracking-wider text-white text-sm">{p.profiles?.username?.split(' ')[0]}</span>
-                            <span className={`font-sztos text-2xl tracking-widest ${textClass}`}>{p.pred_a} - {p.pred_b}</span>
+                            <span className={`font-sztos font-normal text-2xl tracking-widest ${textClass}`}>{p.pred_a} - {p.pred_b}</span>
                             
                             {pts !== null && (
-                              <span className={`font-bold text-sm ml-2 px-2 py-0.5 border ${
+                              <span className={`font-sztos font-normal text-lg ml-2 px-2 py-0.5 border ${
                                 pts === 3 ? 'bg-[#ccff00] text-black border-[#ccff00]' : 
                                 pts > 0 ? 'bg-[#ff5500] text-white border-[#ff5500]' : 
                                 'bg-[#ff004d] text-white border-[#ff004d]'
@@ -365,7 +360,7 @@ export default function Dashboard() {
 
         <button 
           onClick={saveAllPredictions} 
-          className="md:hidden fixed bottom-6 right-6 bg-[#ccff00] text-black font-sztos text-2xl p-4 shadow-[4px_4px_0px_#fff] border-2 border-black z-50 active:translate-y-1 active:shadow-none transition-all"
+          className="md:hidden fixed bottom-6 right-6 bg-[#ccff00] text-black font-sztos font-normal text-2xl p-4 shadow-[4px_4px_0px_#fff] border-2 border-black z-50 active:translate-y-1 active:shadow-none transition-all"
         >
           💾
         </button>

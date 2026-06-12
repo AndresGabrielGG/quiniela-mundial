@@ -1,13 +1,22 @@
 @import "tailwindcss";
+/* Grosor Normal (Para marcadores y botones) */
 @font-face {
   font-family: 'Sztos';
-  src: url('/fonts/Sztos.otf') format('opentype');
-  font-weight: 800;
+  src: url('/fonts/Sztos-Regular.otf') format('opentype');
+  font-weight: 400;
   font-style: normal;
 }
+
+/* Grosor Fuerte (Para los equipos) */
+@font-face {
+  font-family: 'Sztos';
+  src: url('/fonts/Sztos-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
 .font-sztos {
   font-family: 'Sztos', sans-serif;
-  letter-spacing: 0.05em;
 }
 :root {
   --background: #ffffff;
