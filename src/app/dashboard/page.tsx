@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import Image from 'next/image'
 
-// Interfaces para TypeScript
 interface Match {
   id: string;
   team_a: string;
@@ -144,144 +143,158 @@ export default function Dashboard() {
     }
   }
 
-  if (!user) return <p className="min-h-screen bg-slate-900 text-white p-8">Cargando tu quiniela...</p>
+  if (!user) return <p className="min-h-screen bg-black text-white p-8 flex items-center justify-center font-sztos text-3xl">CARGANDO...</p>
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-8">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
+      <div className="max-w-5xl mx-auto">
         
-        {/* Cabecera del Usuario */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-800 p-4 rounded-xl mb-6 shadow-md gap-4">
+        {/* CABECERA AL ESTILO 26 */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111] border-4 border-white p-6 mb-8 gap-6 rounded-none shadow-[8px_8px_0px_#ccff00]">
           <div className="flex items-center gap-4">
             {user.user_metadata.avatar_url && (
-              <Image src={user.user_metadata.avatar_url} alt="Avatar" width={48} height={48} className="rounded-full border-2 border-emerald-400" />
+              <Image src={user.user_metadata.avatar_url} alt="Avatar" width={56} height={56} className="border-2 border-white grayscale hover:grayscale-0 transition-all" />
             )}
             <div>
-              <h2 className="text-xl font-bold">Hola, {user.user_metadata.full_name}</h2>
-              <p className="text-emerald-400 font-semibold">{totalPoints} Puntos acumulados</p>
+              <h2 className="text-2xl font-black uppercase tracking-tighter">{user.user_metadata.full_name}</h2>
+              <p className="text-[#ccff00] font-sztos text-xl mt-1">{totalPoints} PTS</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-2 md:gap-3 justify-start md:justify-end w-full md:w-auto">
-            <button onClick={() => router.push('/bracket')} className="bg-sky-500/10 text-sky-400 px-4 py-2 rounded-lg hover:bg-sky-500/20 transition-colors font-semibold border border-sky-500/20 text-sm md:text-base flex-1 md:flex-none">
-              Bracket 🌳
+          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+            <button onClick={() => router.push('/bracket')} className="bg-[#5500ff] text-white px-5 py-2 font-black uppercase tracking-wider border-2 border-white hover:bg-white hover:text-black transition-colors flex-1 md:flex-none">
+              Bracket
             </button>
-            <button onClick={() => router.push('/premios')} className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg hover:bg-amber-500/20 transition-colors font-semibold border border-amber-500/20 text-sm md:text-base flex-1 md:flex-none">
-              Premios 🌟
+            <button onClick={() => router.push('/premios')} className="bg-[#ff004d] text-white px-5 py-2 font-black uppercase tracking-wider border-2 border-white hover:bg-white hover:text-black transition-colors flex-1 md:flex-none">
+              Premios
             </button>
-            <button onClick={() => router.push('/ranking')} className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg hover:bg-emerald-500/20 transition-colors font-semibold border border-emerald-500/20 text-sm md:text-base flex-1 md:flex-none">
-              Ranking 🏆
+            <button onClick={() => router.push('/ranking')} className="bg-[#00e5ff] text-black px-5 py-2 font-black uppercase tracking-wider border-2 border-white hover:bg-white hover:text-black transition-colors flex-1 md:flex-none">
+              Ranking
             </button>
-            <button onClick={async () => { await supabase.auth.signOut(); router.push('/'); }} className="bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/20 text-sm md:text-base w-full md:w-auto">
+            <button onClick={async () => { await supabase.auth.signOut(); router.push('/'); }} className="bg-transparent text-white px-5 py-2 font-black uppercase tracking-wider border-2 border-white hover:bg-red-600 transition-colors w-full md:w-auto">
               Salir
             </button>
           </div>
         </div>
 
         {role === 'admin' && (
-          <div className="mb-8 p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="mb-8 p-4 bg-white text-black border-4 border-black flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[6px_6px_0px_#ff004d]">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">👑</span>
+              <span className="text-3xl">⚙️</span>
               <div>
-                <h2 className="font-bold text-emerald-400">Modo Administrador Activo</h2>
-                <p className="text-sm text-emerald-200/70">Tienes acceso al panel de control y sincronización de APIs.</p>
+                <h2 className="font-black uppercase tracking-tighter text-xl">Modo Admin</h2>
+                <p className="text-sm font-bold text-gray-600">Acceso al Centro de Mando.</p>
               </div>
             </div>
-            <button 
-              onClick={() => router.push('/admin')} 
-              className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded-lg transition-all shadow-lg shadow-emerald-900/50"
-            >
-              Ir al Panel Maestro
+            <button onClick={() => router.push('/admin')} className="w-full md:w-auto bg-black text-white font-sztos text-xl py-2 px-6 hover:bg-[#ff004d] transition-colors">
+              ENTRAR
             </button>
           </div>
         )}
 
-        <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-2">
-          <h3 className="text-2xl font-bold">Calendario Oficial</h3>
-          <button onClick={saveAllPredictions} className="hidden md:block bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-500 transition-colors text-sm shadow-lg">
-            💾 Guardar Cambios
+        <div className="flex justify-between items-end mb-6 border-b-4 border-white pb-3">
+          <h3 className="text-4xl font-sztos text-white">CALENDARIO OFICIAL</h3>
+          <button onClick={saveAllPredictions} className="hidden md:block bg-[#ccff00] text-black font-sztos text-xl py-2 px-6 border-2 border-white hover:bg-white transition-colors">
+            GUARDAR TODO
           </button>
         </div>
         
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {matches.map((match) => {
             const hasStarted = new Date(match.kickoff_time) < new Date()
             const pred = predictions[match.id] || { pred_a: '', pred_b: '' }
             const matchGroupPreds = groupPredictions.filter(p => p.match_id === match.id)
 
             return (
-              <div key={match.id} className="bg-slate-800 rounded-xl border border-slate-700 shadow-sm flex flex-col overflow-hidden">
+              <div key={match.id} className="bg-[#0a0a0a] border-4 border-[#222] hover:border-white transition-colors flex flex-col overflow-hidden relative">
                 
-                <div className={`p-4 md:p-6 flex flex-col md:flex-row items-center gap-4 ${hasStarted ? 'bg-slate-800/50' : ''}`}>
+                {/* LÍNEA DE COLOR SUPERIOR */}
+                <div className="h-2 w-full bg-gradient-to-r from-[#5500ff] via-[#ff004d] to-[#00e5ff]" />
+
+                <div className="p-4 md:p-6 flex flex-col lg:flex-row items-center justify-between gap-6">
                   
-                  <div className="w-full md:w-44 shrink-0 flex flex-row justify-between items-center md:flex-col md:items-start text-sm text-slate-400 mb-2 md:mb-0 border-b border-slate-700/50 md:border-none pb-2 md:pb-0">
-                    <div className="flex items-center md:items-start md:flex-col gap-1 md:gap-0">
-                      <span>{new Date(match.kickoff_time).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                      <span className="md:hidden">•</span>
-                      <span>{new Date(match.kickoff_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                  {/* FECHA Y ESTADO */}
+                  <div className="w-full lg:w-48 shrink-0 flex flex-row lg:flex-col justify-between lg:justify-center items-center lg:items-start border-b-2 border-[#333] lg:border-none pb-3 lg:pb-0">
+                    <div className="font-black text-gray-400 uppercase tracking-widest text-sm lg:text-base">
+                      {new Date(match.kickoff_time).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} <span className="text-white mx-1">•</span> {new Date(match.kickoff_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     {hasStarted && (
-                      <p className="text-red-400 font-bold mt-0 md:mt-1">
-                        {match.status === 'finished' ? 'Finalizado 🏁' : 'En juego 🔒'}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 md:gap-4 text-xl font-bold flex-1 justify-center">
-                    <span className="text-right w-20 md:w-24 text-sm md:text-lg">{match.team_a}</span>
-                    {match.home_logo && <img src={match.home_logo} alt="logo" className="w-8 h-8 object-contain" />}
-                    
-                    {!hasStarted ? (
-                      <>
-                        <input 
-                          type="number" min="0" value={pred.pred_a ?? ''} onChange={(e) => handleInputChange(match.id, 'a', e.target.value)}
-                          className="w-12 h-12 text-center bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-emerald-500 outline-none" 
-                        />
-                        <span className="text-slate-500">-</span>
-                        <input 
-                          type="number" min="0" value={pred.pred_b ?? ''} onChange={(e) => handleInputChange(match.id, 'b', e.target.value)}
-                          className="w-12 h-12 text-center bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-emerald-500 outline-none" 
-                        />
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center min-w-[100px]">
-                        <div className="text-2xl md:text-3xl text-white tracking-widest bg-slate-950 px-4 py-2 rounded-lg border border-slate-700 w-full text-center shadow-inner">
-                          {match.score_a ?? 0} - {match.score_b ?? 0}
-                        </div>
-                        <div className="mt-2 text-xs md:text-sm font-medium text-emerald-400 bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-800/50 whitespace-nowrap">
-                          Pronóstico: {(pred.pred_a !== '' && pred.pred_a !== undefined) ? `${pred.pred_a} - ${pred.pred_b}` : 'Ninguno'}
-                        </div>
+                      <div className={`mt-1 font-sztos text-xl px-2 py-1 inline-block ${match.status === 'finished' ? 'bg-white text-black' : 'bg-[#ccff00] text-black animate-pulse'}`}>
+                        {match.status === 'finished' ? 'FINAL' : 'EN VIVO'}
                       </div>
                     )}
-                    
-                    {match.away_logo && <img src={match.away_logo} alt="logo" className="w-8 h-8 object-contain" />}
-                    <span className="text-left w-20 md:w-24 text-sm md:text-lg">{match.team_b}</span>
                   </div>
 
-                  <div className="w-full md:w-44 shrink-0 flex justify-center md:justify-end">
+                  {/* EL MARCADOR TIPO BROADCAST TV */}
+                  <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0 bg-black border-2 border-white rounded-full p-2 flex-1 max-w-2xl justify-center shadow-lg">
+                    
+                    {/* EQUIPO A */}
+                    <div className="flex items-center justify-end gap-3 flex-1 px-4">
+                      <span className="font-sztos text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_a.substring(0, 3).toUpperCase()}</span>
+                      {match.home_logo && <img src={match.home_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
+                    </div>
+                    
+                    {/* ZONA CENTRAL DE NÚMEROS */}
+                    <div className="flex items-center justify-center gap-2 px-4 border-x-2 border-[#333]">
+                      {!hasStarted ? (
+                        <>
+                          <input 
+                            type="number" min="0" value={pred.pred_a ?? ''} onChange={(e) => handleInputChange(match.id, 'a', e.target.value)}
+                            className="w-14 h-14 md:w-16 md:h-16 text-center bg-black border-2 border-gray-600 font-sztos text-3xl md:text-4xl text-white focus:border-[#00e5ff] focus:bg-[#00e5ff]/10 outline-none transition-all rounded-md" 
+                          />
+                          <span className="text-gray-500 font-black text-xl">-</span>
+                          <input 
+                            type="number" min="0" value={pred.pred_b ?? ''} onChange={(e) => handleInputChange(match.id, 'b', e.target.value)}
+                            className="w-14 h-14 md:w-16 md:h-16 text-center bg-black border-2 border-gray-600 font-sztos text-3xl md:text-4xl text-white focus:border-[#00e5ff] focus:bg-[#00e5ff]/10 outline-none transition-all rounded-md" 
+                          />
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-3 bg-white text-black px-6 py-2 rounded-lg font-sztos text-4xl md:text-5xl shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                            <span>{match.score_a ?? 0}</span>
+                            <span className="text-gray-400 text-2xl">-</span>
+                            <span>{match.score_b ?? 0}</span>
+                          </div>
+                          <div className="mt-2 text-xs font-black uppercase text-[#00e5ff] tracking-widest border border-[#00e5ff] px-2 py-0.5 rounded">
+                            TU PICK: {(pred.pred_a !== '' && pred.pred_a !== undefined) ? `${pred.pred_a} - ${pred.pred_b}` : 'N/A'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* EQUIPO B */}
+                    <div className="flex items-center justify-start gap-3 flex-1 px-4">
+                      {match.away_logo && <img src={match.away_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
+                      <span className="font-sztos text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_b.substring(0, 3).toUpperCase()}</span>
+                    </div>
+                  </div>
+
+                  {/* BOTONES DE ACCIÓN */}
+                  <div className="w-full lg:w-48 shrink-0 flex justify-center lg:justify-end mt-4 lg:mt-0">
                     {!hasStarted ? (
-                      <button onClick={saveAllPredictions} className="bg-emerald-500 text-slate-900 font-bold py-2 px-6 rounded-lg hover:bg-emerald-400 transition-colors w-full md:w-auto shadow-md">
-                        Guardar Todas
+                      <button onClick={saveAllPredictions} className="w-full lg:w-auto bg-white text-black font-black uppercase tracking-wider py-3 px-6 border-2 border-black hover:bg-[#ccff00] transition-colors">
+                        Guardar
                       </button>
                     ) : (
                       <button 
                         onClick={() => setExpandedMatch(expandedMatch === match.id ? null : match.id)} 
-                        className="bg-slate-700 text-slate-300 font-semibold py-2 px-6 rounded-lg hover:bg-slate-600 transition-colors w-full md:w-auto"
+                        className="w-full lg:w-auto bg-[#222] text-white font-bold py-3 px-6 border-2 border-[#444] hover:bg-white hover:text-black transition-colors uppercase text-sm tracking-widest"
                       >
-                        {expandedMatch === match.id ? 'Ocultar grupo' : 'Ver al grupo 👀'}
+                        {expandedMatch === match.id ? 'CERRAR' : 'VER EL GRUPO'}
                       </button>
                     )}
                   </div>
                 </div>
 
+                {/* CAJA DE PREDICCIONES DE LOS AMIGOS */}
                 {hasStarted && expandedMatch === match.id && (
-                  <div className="bg-slate-900/50 p-4 border-t border-slate-700 flex flex-wrap gap-4">
+                  <div className="bg-[#111] p-6 border-t-4 border-[#222] flex flex-wrap gap-4">
                     {matchGroupPreds.length > 0 ? (
                       matchGroupPreds.map((p, idx) => {
-                        // LÓGICA DE COLORES Y PUNTUACIÓN
                         let pts: number | null = null;
-                        let colorClass = "bg-slate-800 border-slate-700 text-slate-300"; // Por defecto (gris)
-                        let textClass = "text-slate-300";
+                        // Estilo por defecto (Gris, sin puntos aún)
+                        let colorClass = "bg-[#222] border-[#444] text-gray-400"; 
+                        let textClass = "text-white";
 
                         if (match.score_a !== null && match.score_b !== null) {
                           const acertoMarcador = p.pred_a === match.score_a && p.pred_b === match.score_b;
@@ -296,46 +309,45 @@ export default function Dashboard() {
                           else if (acertoGanador) pts = 1;
                           else pts = 0;
 
-                          // Asignar colores según los puntos ganados
+                          // LÓGICA DE COLORES MUNDIALISTAS VIBRANTES
                           if (pts === 3) {
-                            colorClass = "bg-emerald-900/20 border-emerald-500/50";
-                            textClass = "text-emerald-400 font-bold";
+                            colorClass = "bg-[#ccff00]/10 border-[#ccff00]"; // Verde Neón Perfecto
+                            textClass = "text-[#ccff00] font-black";
                           } else if (pts > 0) {
-                            colorClass = "bg-amber-900/20 border-amber-500/50";
-                            textClass = "text-amber-400 font-bold";
+                            colorClass = "bg-[#ff5500]/10 border-[#ff5500]"; // Naranja Parcial
+                            textClass = "text-[#ff5500] font-bold";
                           } else {
-                            colorClass = "bg-red-900/20 border-red-500/30";
-                            textClass = "text-red-400 font-semibold";
+                            colorClass = "bg-[#ff004d]/10 border-[#ff004d]"; // Rojo Fallo
+                            textClass = "text-[#ff004d] font-bold";
                           }
                         }
 
                         return (
-                          <div key={idx} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${colorClass}`}>
+                          <div key={idx} className={`flex items-center gap-3 px-4 py-2 border-2 transition-all ${colorClass}`}>
                             {p.profiles?.avatar_url ? (
-                              <img src={p.profiles.avatar_url} alt="avatar" className="w-6 h-6 rounded-full border border-slate-600/50" />
+                              <img src={p.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-none border border-white/20 grayscale" />
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold text-slate-300">
+                              <div className="w-8 h-8 bg-[#333] flex items-center justify-center font-sztos text-white border border-white/20">
                                 {p.profiles?.username?.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-sm font-semibold text-slate-200">{p.profiles?.username?.split(' ')[0]}</span>
-                            <span className={`ml-2 tracking-widest ${textClass}`}>{p.pred_a} - {p.pred_b}</span>
+                            <span className="font-bold uppercase tracking-wider text-white text-sm">{p.profiles?.username?.split(' ')[0]}</span>
+                            <span className={`font-sztos text-2xl ${textClass}`}>{p.pred_a} - {p.pred_b}</span>
                             
-                            {/* Insignia de puntos */}
                             {pts !== null && (
-                              <span className={`text-[10px] font-black ml-1 px-1.5 py-0.5 rounded shadow-sm ${
-                                pts === 3 ? 'bg-emerald-500/20 text-emerald-400' : 
-                                pts > 0 ? 'bg-amber-500/20 text-amber-400' : 
-                                'bg-red-500/10 text-red-500/80'
+                              <span className={`font-sztos text-xl ml-2 px-2 py-0.5 ${
+                                pts === 3 ? 'bg-[#ccff00] text-black' : 
+                                pts > 0 ? 'bg-[#ff5500] text-white' : 
+                                'bg-[#ff004d] text-white'
                               }`}>
-                                +{pts} pts
+                                +{pts}
                               </span>
                             )}
                           </div>
                         )
                       })
                     ) : (
-                      <p className="text-sm text-slate-500 w-full text-center py-2">Nadie hizo predicciones para este partido 😴</p>
+                      <p className="font-bold uppercase tracking-widest text-gray-500 w-full text-center py-4">Nadie jugó este partido.</p>
                     )}
                   </div>
                 )}
@@ -347,7 +359,7 @@ export default function Dashboard() {
 
         <button 
           onClick={saveAllPredictions} 
-          className="md:hidden fixed bottom-6 right-6 bg-emerald-500 text-emerald-950 font-black p-4 rounded-full shadow-lg shadow-emerald-900/50 hover:scale-110 transition-transform z-50"
+          className="md:hidden fixed bottom-6 right-6 bg-[#ccff00] text-black font-sztos text-2xl p-4 shadow-[4px_4px_0px_#fff] border-2 border-black z-50 active:translate-y-1 active:shadow-none transition-all"
         >
           💾
         </button>

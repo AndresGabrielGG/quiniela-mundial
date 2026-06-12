@@ -1,5 +1,14 @@
 @import "tailwindcss";
-
+@font-face {
+  font-family: 'Sztos';
+  src: url('/fonts/Sztos.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+}
+.font-sztos {
+  font-family: 'Sztos', sans-serif;
+  letter-spacing: 0.05em;
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;
