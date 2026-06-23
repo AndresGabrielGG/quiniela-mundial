@@ -6,22 +6,19 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 
-const TOURNAMENT_START = new Date('2026-06-11T00:00:00Z')
+const TOURNAMENT_START = new Date('2026-06-12T00:00:00Z')
 
 interface Profile { id: string; username: string; avatar_url: string; }
 interface Team { name: string; flag: string; group_letter?: string; }
 interface Matchup { team1: Team | null; team2: Team | null; }
 interface BracketData { champion: string | null; knockout_picks: (Team | null)[][]; group_standings: Record<string, Team[]>; selected_thirds: Team[]; }
 
-// 1. SOLUCIÓN AL TEAMFLAG: Lo declaramos afuera y arriba para que todo el archivo lo vea
-const TeamFlag = ({ flag, name, className = "w-4 h-4 md:w-5 md:h-5" }: { flag?: string, name?: string, className?: string }) => {
+const TeamFlag = ({ flag, name, className = "w-5 h-5 md:w-6 md:h-6" }: { flag?: string, name?: string, className?: string }) => {
   if (!flag) return <span className="text-base">❔</span>
-  if (flag.startsWith('http')) return <img src={flag} alt={name} className={`object-contain ${className}`} />
+  if (flag.startsWith('http')) return <img src={flag} alt={name} className={`object-contain bg-white rounded-full p-0.5 ${className}`} />
   return <span className="text-base">{flag}</span>
 }
 
-// 2. SOLUCIÓN AL ORDEN DE LA FUNCIÓN: La sacamos del componente principal
-// Al estar aquí arriba, el useEffect de abajo puede usarla sin problemas.
 const solveThirdPlaceMatrix = (thirds: Team[]): Team[] => {
   const slots = [['A','B','C','D','F'], ['C','D','F','G','H'], ['C','E','F','H','I'], ['E','H','I','J','K'], ['B','E','F','I','J'], ['A','E','H','I','J'], ['E','F','G','I','J'], ['D','E','I','J','L']]
   let result: Team[] | null = null;
@@ -95,8 +92,8 @@ export default function PublicBracket() {
   }
 
   const renderRoundColumn = (title: string, roundIndex: number, startIndex: number, count: number) => (
-    <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-28 md:w-32 lg:w-32 xl:w-36 px-1 lg:px-2">
-      <div className="text-center font-bold text-slate-500 mb-2 uppercase tracking-wider text-[10px] xl:text-xs h-5">{title}</div>
+    <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-32 md:w-36 lg:w-40 xl:w-44 px-2">
+      <div className="text-center font-sztos font-bold text-[#ff004d] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
       <div className="flex flex-col justify-around flex-1 py-8">
         {Array.from({length: count}).map((_, i) => {
           const matchIndex = startIndex + i;
@@ -112,64 +109,64 @@ export default function PublicBracket() {
     </div>
   )
 
-  if (loading) return <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center font-bold">Cargando pronóstico...</div>
+  if (loading) return <div className="min-h-screen bg-black text-[#00e5ff] flex items-center justify-center font-sztos font-bold text-4xl animate-pulse tracking-widest">Buscando...</div>
 
   if (isLocked) return (
-    <main className="min-h-screen bg-slate-900 text-white p-8 flex flex-col items-center justify-center">
+    <main className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center font-sans">
       <div className="text-8xl mb-6 animate-bounce">🔒</div>
-      <h1 className="text-3xl font-bold text-amber-400 mb-2 text-center">¡Pronóstico Oculto!</h1>
-      <p className="text-slate-400 max-w-md text-center mb-8">El bracket de {profile?.username} es secreto hasta el 11 de Junio de 2026.</p>
-      <Link href="/ranking" className="bg-slate-800 px-6 py-3 rounded-xl border border-slate-700 hover:bg-slate-700 font-bold">Volver al Ranking</Link>
+      <h1 className="text-4xl md:text-5xl font-sztos font-bold text-white mb-4 text-center uppercase tracking-widest">¡Top Secret!</h1>
+      <p className="text-gray-400 max-w-md text-center mb-10 text-lg">El bracket de <strong className="text-[#00e5ff] font-sztos uppercase">{profile?.username}</strong> es secreto hasta que empiece el Mundial.</p>
+      <Link href="/ranking" className="bg-[#ccff00] text-black font-sztos font-bold px-8 py-3 border-2 border-white hover:bg-white uppercase tracking-widest text-xl">Volver al Ranking</Link>
     </main>
   )
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+    <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
       <div className="max-w-[1600px] mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center bg-slate-800 p-6 rounded-2xl mb-8 border border-slate-700 shadow-xl">
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111] p-6 border-4 border-white mb-8 shadow-[8px_8px_0px_#00e5ff] gap-6">
+          <div className="flex items-center gap-4">
             {profile?.avatar_url ? (
-              <Image src={profile.avatar_url} alt="Avatar" width={64} height={64} className="rounded-full border-2 border-emerald-400 object-cover" />
+              <Image src={profile.avatar_url} alt="Avatar" width={64} height={64} className="rounded-full border-2 border-white object-cover w-16 h-16" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-2xl font-bold">{profile?.username?.charAt(0).toUpperCase()}</div>
+              <div className="w-16 h-16 rounded-full bg-[#333] border-2 border-white flex items-center justify-center text-3xl font-sztos font-bold text-white">{profile?.username?.charAt(0).toUpperCase()}</div>
             )}
             <div>
-              <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Bracket Oficial de</p>
-              <h1 className="text-2xl md:text-3xl font-black text-white">{profile?.username}</h1>
+              <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Bracket Oficial de</p>
+              <h1 className="text-3xl md:text-4xl font-sztos font-bold text-white uppercase tracking-wider">{profile?.username}</h1>
             </div>
           </div>
-          <Link href="/ranking" className="bg-slate-900 text-slate-300 px-6 py-3 rounded-xl border border-slate-700 hover:bg-slate-950 transition-colors font-bold">Volver al Ranking</Link>
+          <Link href="/ranking" className="bg-[#5500ff] text-white px-6 py-3 border-2 border-white hover:bg-white hover:text-black transition-colors font-sztos font-bold uppercase tracking-widest text-xl w-full md:w-auto text-center">Volver</Link>
         </div>
 
         {!bracket ? (
-          <div className="text-center py-20 bg-slate-800/50 rounded-2xl border border-slate-700 border-dashed">
-            <span className="text-6xl mb-4 block">👻</span>
-            <h2 className="text-2xl font-bold text-slate-400">Este usuario aún no ha armado su bracket.</h2>
+          <div className="text-center py-24 bg-[#111] border-4 border-[#333] border-dashed">
+            <span className="text-6xl mb-4 block opacity-50">👻</span>
+            <h2 className="text-3xl font-sztos font-bold text-gray-500 uppercase tracking-widest">Bracket Vacío</h2>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto bg-slate-900/40 rounded-3xl border border-slate-800 scrollbar-thin scrollbar-thumb-sky-600 scrollbar-track-transparent">
-            <div className="flex flex-row justify-between min-w-[1100px] xl:min-w-[1300px] h-[1150px] p-4 md:p-8 mx-auto relative">
-              {renderRoundColumn("16avos", 0, 0, 8)}
-              {renderRoundColumn("Octavos", 1, 0, 4)}
-              {renderRoundColumn("Cuartos", 2, 0, 2)}
-              {renderRoundColumn("Semis", 3, 0, 1)}
+          <div className="w-full overflow-x-auto bg-[#0a0a0a] border-4 border-white shadow-[10px_10px_0px_#00e5ff] scrollbar-thin scrollbar-thumb-[#00e5ff] scrollbar-track-black p-4 md:p-8">
+            <div className="flex flex-row justify-between min-w-[1200px] xl:min-w-[1400px] h-[1200px] mx-auto relative">
+              {renderRoundColumn("16AVOS", 0, 0, 8)}
+              {renderRoundColumn("OCTAVOS", 1, 0, 4)}
+              {renderRoundColumn("CUARTOS", 2, 0, 2)}
+              {renderRoundColumn("SEMIS", 3, 0, 1)}
 
-              <div className="flex flex-col justify-center items-center h-full w-44 shrink-0 px-2 relative">
-                <div className="text-center absolute top-12"><span className="text-5xl drop-shadow-xl shadow-amber-500">🏆</span><h3 className="text-lg font-black text-amber-400 tracking-widest mt-2">GRAN FINAL</h3></div>
+              <div className="flex flex-col justify-center items-center h-full w-48 shrink-0 px-2 relative">
+                <div className="text-center absolute top-12"><span className="text-6xl drop-shadow-[0_0_15px_#00e5ff]">🏆</span><h3 className="text-2xl font-sztos font-bold text-[#00e5ff] tracking-widest mt-2 uppercase">FINAL</h3></div>
                 <div className="w-full relative z-10"><MatchupNode match={getMatch(4, 0)} winner={bracket.knockout_picks[4]?.[0] || null} /></div>
-                <div className="absolute bottom-24 w-full flex flex-col items-center">
-                  <h4 className="text-emerald-400 font-bold mb-2">CAMPEÓN</h4>
-                  <div className={`border-2 rounded-xl p-3 flex flex-col items-center justify-center w-32 h-28 shadow-lg mb-6 ${bracket.champion ? 'bg-emerald-900 border-emerald-500' : 'bg-slate-800 border-slate-700 border-dashed'}`}>
-                    <TeamFlag flag={bracket.knockout_picks[4]?.[0]?.flag} name={bracket.knockout_picks[4]?.[0]?.name} className="w-12 h-12 mb-2" />
-                    <span className="text-xs font-bold truncate w-full text-center">{bracket.champion || '...'}</span>
+                <div className="absolute bottom-28 w-full flex flex-col items-center">
+                  <h4 className="text-white font-sztos font-bold text-xl mb-3 uppercase tracking-widest">CAMPEÓN</h4>
+                  <div className={`border-4 p-4 flex flex-col items-center justify-center w-40 h-32 ${bracket.champion ? 'bg-[#5500ff]/20 border-[#5500ff] scale-110' : 'bg-black border-[#444] border-dashed'}`}>
+                    <TeamFlag flag={bracket.knockout_picks[4]?.[0]?.flag} name={bracket.knockout_picks[4]?.[0]?.name} className="w-16 h-16 mb-2" />
+                    <span className="text-lg font-sztos font-bold text-white tracking-wider truncate w-full text-center uppercase">{bracket.champion?.substring(0, 3) || '???'}</span>
                   </div>
                 </div>
               </div>
 
-              {renderRoundColumn("Semis", 3, 1, 1)}
-              {renderRoundColumn("Cuartos", 2, 2, 2)}
-              {renderRoundColumn("Octavos", 1, 4, 4)}
-              {renderRoundColumn("16avos", 0, 8, 8)}
+              {renderRoundColumn("SEMIS", 3, 1, 1)}
+              {renderRoundColumn("CUARTOS", 2, 2, 2)}
+              {renderRoundColumn("OCTAVOS", 1, 4, 4)}
+              {renderRoundColumn("16AVOS", 0, 8, 8)}
             </div>
           </div>
         )}
@@ -181,21 +178,22 @@ export default function PublicBracket() {
 function MatchupNode({ match, winner }: { match: Matchup, winner: Team | null }) {
   const t1 = match?.team1; const t2 = match?.team2;
   const getBtnClass = (team: Team | null) => {
-    if (!team) return 'opacity-40 cursor-not-allowed bg-slate-900 text-slate-700'
-    if (winner?.name === team.name) return 'bg-emerald-600 text-white font-bold border-emerald-500'
-    return 'bg-slate-800 text-slate-300 border-slate-700 opacity-60' 
+    if (!team) return 'opacity-30 bg-black text-gray-600'
+    // Color Cyan / Púrpura para indicar al ganador en el perfil ajeno
+    if (winner?.name === team.name) return 'bg-[#00e5ff] text-black'
+    return 'bg-[#111] text-white' 
   }
 
   return (
-    <div className="flex flex-col rounded-md w-full shadow-md shrink-0 overflow-hidden cursor-default">
-      <div className={`flex items-center gap-2 p-2 border ${getBtnClass(t1)} rounded-t-md border-b-0`}>
-        <TeamFlag flag={t1?.flag} name={t1?.name} />
-        <span className="truncate text-[11px] md:text-xs">{t1 ? t1.name : 'Por definir'}</span>
+    <div className="flex flex-col bg-black border-2 border-white w-full shrink-0 overflow-hidden shadow-sm cursor-default">
+      <div className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t1)}`}>
+        <TeamFlag flag={t1?.flag} name={t1?.name} className="w-6 h-6" />
+        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t1 ? t1.name.substring(0, 3) : 'TBD'}</span>
       </div>
-      <div className="h-[1px] bg-slate-900 w-full" />
-      <div className={`flex items-center gap-2 p-2 border ${getBtnClass(t2)} rounded-b-md border-t-0`}>
-        <TeamFlag flag={t2?.flag} name={t2?.name} />
-        <span className="truncate text-[11px] md:text-xs">{t2 ? t2.name : 'Por definir'}</span>
+      <div className="h-[2px] bg-white w-full" />
+      <div className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t2)}`}>
+        <TeamFlag flag={t2?.flag} name={t2?.name} className="w-6 h-6" />
+        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t2 ? t2.name.substring(0, 3) : 'TBD'}</span>
       </div>
     </div>
   )
