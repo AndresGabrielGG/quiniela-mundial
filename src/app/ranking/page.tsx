@@ -60,8 +60,8 @@ export default function Ranking() {
         
         {/* NAVEGACIÓN */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b-4 border-white pb-4">
-          <h1 className="text-4xl md:text-5xl font-sztos font-bold text-white uppercase tracking-wide">Ranking <span className="text-[#ccff00]">Mundial</span></h1>
-          <Link href="/dashboard" className="bg-[#ff004d] text-white px-6 py-2 border-2 border-white hover:bg-white hover:text-black transition-colors w-full md:w-auto text-center font-sztos uppercase tracking-wider text-xl">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-wide">Ranking <span className="text-[#ccff00]">Mundial</span></h1>
+          <Link href="/dashboard" className="bg-[#ff004d] text-white px-6 py-2 border-2 border-white hover:bg-white hover:text-black transition-colors w-full md:w-auto text-center font-bold uppercase tracking-wider text-xl">
             Volver
           </Link>
         </div>
@@ -70,25 +70,25 @@ export default function Ranking() {
         <div className="flex overflow-x-auto bg-black border-4 border-white border-b-0 hide-scrollbar">
           <button 
             onClick={() => setActiveTab('total')}
-            className={`flex-1 py-4 px-4 text-sm md:text-lg font-sztos font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'total' ? 'bg-[#ccff00] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
+            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'total' ? 'bg-[#ccff00] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
           >
             General
           </button>
           <button 
             onClick={() => setActiveTab('quiniela')}
-            className={`flex-1 py-4 px-4 text-sm md:text-lg font-sztos font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'quiniela' ? 'bg-[#00e5ff] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
+            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'quiniela' ? 'bg-[#00e5ff] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
           >
             Quiniela
           </button>
           <button 
             onClick={() => setActiveTab('bracket')}
-            className={`flex-1 py-4 px-4 text-sm md:text-lg font-sztos font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'bracket' ? 'bg-[#5500ff] text-white' : 'bg-[#111] text-white hover:bg-[#222]'}`}
+            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'bracket' ? 'bg-[#5500ff] text-white' : 'bg-[#111] text-white hover:bg-[#222]'}`}
           >
             Bracket
           </button>
           <button 
             onClick={() => setActiveTab('premios')}
-            className={`flex-1 py-4 px-4 text-sm md:text-lg font-sztos font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${activeTab === 'premios' ? 'bg-[#ff004d] text-white' : 'bg-[#111] text-white hover:bg-[#222]'}`}
+            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${activeTab === 'premios' ? 'bg-[#ff004d] text-white' : 'bg-[#111] text-white hover:bg-[#222]'}`}
           >
             Premios
           </button>
@@ -98,7 +98,7 @@ export default function Ranking() {
         <div className="bg-[#0a0a0a] border-4 border-white shadow-[8px_8px_0px_#5500ff] min-h-[400px]">
           {loading ? (
             <div className="flex justify-center items-center h-48">
-              <span className="text-[#00e5ff] font-sztos text-3xl animate-pulse tracking-widest">CARGANDO...</span>
+              <span className="text-[#00e5ff] font-black text-3xl animate-pulse tracking-widest">CARGANDO...</span>
             </div>
           ) : (
             <>
@@ -113,20 +113,20 @@ export default function Ranking() {
                     title="Ver Bracket"
                   >
                     <div className="flex items-center gap-4 md:gap-6">
-                      <span className={`font-sztos font-bold text-3xl md:text-4xl w-8 text-center ${index === 0 ? 'text-[#ccff00]' : index === 1 ? 'text-[#00e5ff]' : index === 2 ? 'text-[#ff004d]' : 'text-gray-500'}`}>
+                      <span className={`font-black text-3xl md:text-4xl w-8 text-center ${index === 0 ? 'text-[#ccff00]' : index === 1 ? 'text-[#00e5ff]' : index === 2 ? 'text-[#ff004d]' : 'text-gray-500'}`}>
                         {index + 1}
                       </span>
                       
                       {profile.avatar_url ? (
                         <Image src={profile.avatar_url} alt={profile.username} width={48} height={48} className="rounded-full border-2 border-white object-cover w-12 h-12" />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-[#222] border-2 border-white flex items-center justify-center font-sztos text-xl text-white">
+                        <div className="w-12 h-12 rounded-full bg-[#222] border-2 border-white flex items-center justify-center font-bold text-xl text-white">
                           {profile.username?.charAt(0).toUpperCase()}
                         </div>
                       )}
                       
                       <div className="flex flex-col">
-                        <span className="text-xl md:text-2xl font-sztos font-bold uppercase tracking-wider group-hover:text-[#ccff00] transition-colors">
+                        <span className="text-xl md:text-2xl font-bold uppercase tracking-wider group-hover:text-[#ccff00] transition-colors">
                           {profile.username}
                         </span>
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-widest md:hidden">VER BRACKET ➔</span>
@@ -134,10 +134,10 @@ export default function Ranking() {
                     </div>
                     
                     <div className="flex items-center gap-6">
-                      <div className="text-3xl md:text-4xl font-sztos font-bold text-white tracking-wider flex items-baseline gap-1">
-                        {points} <span className="text-lg text-[#00e5ff] tracking-widest">PTS</span>
+                      <div className="text-3xl md:text-4xl font-black text-white tracking-wider flex items-baseline gap-1">
+                        {points} <span className="text-lg text-[#00e5ff] tracking-widest font-bold">PTS</span>
                       </div>
-                      <span className="hidden md:block font-sztos text-2xl text-[#333] group-hover:text-[#ccff00] transition-colors">
+                      <span className="hidden md:block font-black text-2xl text-[#333] group-hover:text-[#ccff00] transition-colors">
                         ➔
                       </span>
                     </div>
@@ -146,7 +146,7 @@ export default function Ranking() {
               })}
               
               {profiles.length === 0 && (
-                <p className="p-12 text-center text-gray-500 font-sztos text-2xl uppercase">No hay puntos aún.</p>
+                <p className="p-12 text-center text-gray-500 font-bold text-2xl uppercase">No hay puntos aún.</p>
               )}
             </>
           )}

@@ -208,7 +208,7 @@ export default function BracketPredictor() {
 
   const renderRoundColumn = (title: string, roundIndex: number, startIndex: number, count: number) => (
     <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-32 md:w-36 lg:w-40 xl:w-44 px-2">
-      <div className="text-center font-sztos font-bold text-[#00e5ff] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
+      <div className="text-center font-black text-[#00e5ff] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
       <div className="flex flex-col justify-around flex-1 py-8">
         {Array.from({length: count}).map((_, i) => {
           const matchIndex = startIndex + i;
@@ -225,7 +225,7 @@ export default function BracketPredictor() {
   )
 
   if (!isBrowser) return null
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center font-sztos text-4xl animate-pulse">CARGANDO...</div>
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center font-black text-4xl animate-pulse">CARGANDO...</div>
 
   return (
     <main className="min-h-screen bg-black text-white p-2 md:p-6 font-sans">
@@ -233,14 +233,14 @@ export default function BracketPredictor() {
         
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 px-2 border-b-4 border-white pb-4 gap-4">
-          <h1 className="text-4xl md:text-5xl font-sztos font-bold text-white uppercase tracking-wider">Bracket <span className="text-[#5500ff]">Simulator</span></h1>
-          <Link href="/dashboard" className="bg-[#ccff00] text-black px-6 py-2 border-2 border-white hover:bg-white transition-colors font-sztos uppercase tracking-wider text-xl w-full md:w-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-wider">Bracket <span className="text-[#5500ff]">Simulator</span></h1>
+          <Link href="/dashboard" className="bg-[#ccff00] text-black px-6 py-2 border-2 border-white hover:bg-white transition-colors font-bold uppercase tracking-wider text-xl w-full md:w-auto text-center">
             Volver
           </Link>
         </div>
 
         {isLocked && (
-          <div className="bg-[#ff004d] text-white p-4 border-4 border-white mb-8 text-center font-sztos text-xl uppercase tracking-widest shadow-[6px_6px_0px_#fff]">
+          <div className="bg-[#ff004d] text-white p-4 border-4 border-white mb-8 text-center font-bold text-xl uppercase tracking-widest shadow-[6px_6px_0px_#fff]">
             EL TORNEO HA COMENZADO. TU BRACKET ESTÁ BLOQUEADO 🔒
           </div>
         )}
@@ -250,7 +250,7 @@ export default function BracketPredictor() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10 px-2">
               {Object.entries(groups).map(([letter, teams]) => (
                 <div key={letter} className="bg-[#111] p-4 border-4 border-[#222] shadow-[6px_6px_0px_#00e5ff]">
-                  <h3 className="text-xl font-sztos font-bold text-[#00e5ff] mb-3 border-b-2 border-[#333] pb-2 uppercase tracking-widest">Grupo {letter}</h3>
+                  <h3 className="text-xl font-black text-[#00e5ff] mb-3 border-b-2 border-[#333] pb-2 uppercase tracking-widest">Grupo {letter}</h3>
                   <Droppable droppableId={letter} isDropDisabled={isLocked}>
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-2 min-h-[140px]">
@@ -259,9 +259,9 @@ export default function BracketPredictor() {
                             {(provided, snapshot) => (
                               <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}
                                 className={`flex items-center gap-3 p-2 border-2 transition-all ${snapshot.isDragging ? 'bg-[#111] border-[#ccff00] z-50 shadow-[4px_4px_0px_#ccff00]' : 'bg-black border-[#444]'} ${idx < 2 && !snapshot.isDragging ? 'border-[#00e5ff]' : idx === 2 && !snapshot.isDragging ? 'border-[#ff5500]' : ''} ${isLocked ? 'opacity-80 cursor-not-allowed' : ''}`}>
-                                <span className={`font-sztos font-bold w-6 text-center text-xl ${idx < 2 ? 'text-[#00e5ff]' : idx === 2 ? 'text-[#ff5500]' : 'text-gray-500'}`}>{idx + 1}</span>
+                                <span className={`font-black w-6 text-center text-xl ${idx < 2 ? 'text-[#00e5ff]' : idx === 2 ? 'text-[#ff5500]' : 'text-gray-500'}`}>{idx + 1}</span>
                                 <TeamFlag flag={team.flag} name={team.name} />
-                                <span className="flex-1 truncate font-sztos font-normal text-lg tracking-wider">{team.name.substring(0, 3).toUpperCase()}</span>
+                                <span className="flex-1 truncate font-bold text-lg tracking-wider uppercase">{team.name.substring(0, 3)}</span>
                                 {!isLocked && <span className="text-gray-600 cursor-grab px-1 text-xl">≡</span>}
                               </div>
                             )}
@@ -278,16 +278,16 @@ export default function BracketPredictor() {
         )}
 
         <div className="flex flex-col items-center mb-10 px-2">
-          <h4 className="font-sztos text-xl text-white mb-4 uppercase tracking-widest">Selecciona los 8 Mejores Terceros</h4>
+          <h4 className="font-black text-xl text-white mb-4 uppercase tracking-widest">Selecciona los 8 Mejores Terceros</h4>
           <div className="flex flex-wrap gap-3 bg-[#111] p-6 border-4 border-[#222] shadow-[6px_6px_0px_#ff5500] justify-center w-full">
             {Object.entries(groups).map(([letter, teams]) => {
               const third = teams[2]
               if (!third) return null
               const isSelected = selectedThirds.some(t => t.name === third.name)
               return (
-                <button key={letter} onClick={() => toggleThirdPlace(third)} disabled={isLocked} className={`flex items-center gap-2 px-4 py-2 text-lg transition-all border-2 font-sztos font-normal tracking-wider ${isSelected ? 'bg-[#ff5500] text-black border-[#ff5500]' : 'bg-black text-white border-[#444]'} ${!isLocked && !isSelected ? 'hover:border-[#ff5500]' : ''} ${isLocked ? 'cursor-not-allowed opacity-80' : ''}`}>
+                <button key={letter} onClick={() => toggleThirdPlace(third)} disabled={isLocked} className={`flex items-center gap-2 px-4 py-2 text-lg transition-all border-2 font-bold tracking-wider uppercase ${isSelected ? 'bg-[#ff5500] text-black border-[#ff5500]' : 'bg-black text-white border-[#444]'} ${!isLocked && !isSelected ? 'hover:border-[#ff5500]' : ''} ${isLocked ? 'cursor-not-allowed opacity-80' : ''}`}>
                   <TeamFlag flag={third.flag} name={third.name} className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="truncate">{third.name.substring(0, 3).toUpperCase()}</span>
+                  <span className="truncate">{third.name.substring(0, 3)}</span>
                 </button>
               )
             })}
@@ -296,7 +296,7 @@ export default function BracketPredictor() {
 
         {!isLocked && (
           <div className="flex justify-center pb-10 border-b-4 border-[#333] mx-2">
-            <button onClick={generateBracket} disabled={selectedThirds.length !== 8} className="bg-[#ccff00] text-black font-sztos font-bold text-xl uppercase tracking-widest py-4 px-10 border-2 border-white hover:bg-white transition-colors disabled:bg-[#333] disabled:text-gray-500 disabled:border-[#444] shadow-[6px_6px_0px_#fff] w-full md:w-auto">
+            <button onClick={generateBracket} disabled={selectedThirds.length !== 8} className="bg-[#ccff00] text-black font-black text-xl uppercase tracking-widest py-4 px-10 border-2 border-white hover:bg-white transition-colors disabled:bg-[#333] disabled:text-gray-500 disabled:border-[#444] shadow-[6px_6px_0px_#fff] w-full md:w-auto">
               {selectedThirds.length === 8 ? 'GENERAR FASE FINAL' : `FALTAN TERCEROS (${selectedThirds.length}/8)`}
             </button>
           </div>
@@ -304,8 +304,8 @@ export default function BracketPredictor() {
 
         {roundOf32.length > 0 && (
           <div className="mt-12 pb-16 w-full px-2">
-            <h2 className="text-4xl md:text-6xl font-sztos font-bold mb-8 text-center text-white tracking-widest uppercase">ELIMINATORIAS</h2>
-            <p className="text-center text-[#00e5ff] font-sztos uppercase tracking-widest animate-pulse text-sm mb-6 lg:hidden">← Desliza para ver el árbol →</p>
+            <h2 className="text-4xl md:text-6xl font-black mb-8 text-center text-white tracking-widest uppercase">ELIMINATORIAS</h2>
+            <p className="text-center text-[#00e5ff] font-bold uppercase tracking-widest animate-pulse text-sm mb-6 lg:hidden">← Desliza para ver el árbol →</p>
             
             <div className="w-full overflow-x-auto bg-[#0a0a0a] border-4 border-white shadow-[10px_10px_0px_#ff004d] scrollbar-thin scrollbar-thumb-[#ff004d] scrollbar-track-black p-4 md:p-8">
               <div className="flex flex-row justify-between min-w-[1200px] xl:min-w-[1400px] h-[1200px] mx-auto relative">
@@ -318,7 +318,7 @@ export default function BracketPredictor() {
                 <div className="flex flex-col justify-center items-center h-full w-48 shrink-0 px-2 relative">
                   <div className="text-center absolute top-12">
                     <span className="text-6xl drop-shadow-[0_0_15px_#ccff00]">🏆</span>
-                    <h3 className="text-2xl font-sztos font-bold text-[#ccff00] tracking-widest mt-2 uppercase">FINAL</h3>
+                    <h3 className="text-2xl font-black text-[#ccff00] tracking-widest mt-2 uppercase">FINAL</h3>
                   </div>
                   
                   <div className="w-full relative z-10">
@@ -326,14 +326,14 @@ export default function BracketPredictor() {
                   </div>
 
                   <div className="absolute bottom-24 w-full flex flex-col items-center">
-                    <h4 className="text-white font-sztos font-bold text-xl mb-3 uppercase tracking-widest">CAMPEÓN</h4>
+                    <h4 className="text-white font-black text-xl mb-3 uppercase tracking-widest">CAMPEÓN</h4>
                     <div className={`border-4 p-4 flex flex-col items-center justify-center w-40 h-32 mb-8 transition-all ${picks[4]?.[0] ? 'bg-[#ff004d]/20 border-[#ff004d] scale-110' : 'bg-black border-[#444] border-dashed'}`}>
                       <TeamFlag flag={picks[4]?.[0]?.flag} name={picks[4]?.[0]?.name} className="w-16 h-16 mb-2" />
-                      <span className="text-lg font-sztos font-bold text-white tracking-wider truncate w-full text-center uppercase">{picks[4]?.[0]?.name.substring(0, 3) || '???'}</span>
+                      <span className="text-lg font-bold text-white tracking-wider truncate w-full text-center uppercase">{picks[4]?.[0]?.name.substring(0, 3) || '???'}</span>
                     </div>
 
                     {!isLocked && (
-                      <button onClick={handleSaveBracket} disabled={saving} className="w-full bg-white text-black font-sztos font-bold uppercase tracking-widest py-4 px-4 border-2 border-black shadow-[4px_4px_0px_#ccff00] hover:bg-[#ccff00] transition-colors disabled:opacity-50">
+                      <button onClick={handleSaveBracket} disabled={saving} className="w-full bg-white text-black font-black uppercase tracking-widest py-4 px-4 border-2 border-black shadow-[4px_4px_0px_#ccff00] hover:bg-[#ccff00] transition-colors disabled:opacity-50">
                         {saving ? 'GUARDANDO...' : 'GUARDAR BRACKET'}
                       </button>
                     )}
@@ -365,12 +365,12 @@ function MatchupNode({ match, winner, onSelect, isLocked }: { match: Matchup, wi
     <div className="flex flex-col bg-black border-2 border-white w-full shrink-0 overflow-hidden shadow-sm">
       <button onClick={() => !isLocked && t1 && t2 && onSelect(t1)} disabled={!t1 || !t2 || isLocked} className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t1)} ${isLocked ? 'cursor-default' : ''}`}>
         <TeamFlag flag={t1?.flag} name={t1?.name} className="w-6 h-6" />
-        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t1 ? t1.name.substring(0, 3) : 'TBD'}</span>
+        <span className="truncate font-bold text-sm md:text-base tracking-wider uppercase">{t1 ? t1.name.substring(0, 3) : 'TBD'}</span>
       </button>
       <div className="h-[2px] bg-white w-full" />
       <button onClick={() => !isLocked && t1 && t2 && onSelect(t2)} disabled={!t1 || !t2 || isLocked} className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t2)} ${isLocked ? 'cursor-default' : ''}`}>
         <TeamFlag flag={t2?.flag} name={t2?.name} className="w-6 h-6" />
-        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t2 ? t2.name.substring(0, 3) : 'TBD'}</span>
+        <span className="truncate font-bold text-sm md:text-base tracking-wider uppercase">{t2 ? t2.name.substring(0, 3) : 'TBD'}</span>
       </button>
     </div>
   )

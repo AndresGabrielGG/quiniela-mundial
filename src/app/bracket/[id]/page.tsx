@@ -93,7 +93,7 @@ export default function PublicBracket() {
 
   const renderRoundColumn = (title: string, roundIndex: number, startIndex: number, count: number) => (
     <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-32 md:w-36 lg:w-40 xl:w-44 px-2">
-      <div className="text-center font-sztos font-bold text-[#ff004d] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
+      <div className="text-center font-black text-[#ff004d] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
       <div className="flex flex-col justify-around flex-1 py-8">
         {Array.from({length: count}).map((_, i) => {
           const matchIndex = startIndex + i;
@@ -109,14 +109,14 @@ export default function PublicBracket() {
     </div>
   )
 
-  if (loading) return <div className="min-h-screen bg-black text-[#00e5ff] flex items-center justify-center font-sztos font-bold text-4xl animate-pulse tracking-widest">Buscando...</div>
+  if (loading) return <div className="min-h-screen bg-black text-[#00e5ff] flex items-center justify-center font-black text-4xl animate-pulse tracking-widest">Buscando...</div>
 
   if (isLocked) return (
     <main className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center font-sans">
       <div className="text-8xl mb-6 animate-bounce">🔒</div>
-      <h1 className="text-4xl md:text-5xl font-sztos font-bold text-white mb-4 text-center uppercase tracking-widest">¡Top Secret!</h1>
-      <p className="text-gray-400 max-w-md text-center mb-10 text-lg">El bracket de <strong className="text-[#00e5ff] font-sztos uppercase">{profile?.username}</strong> es secreto hasta que empiece el Mundial.</p>
-      <Link href="/ranking" className="bg-[#ccff00] text-black font-sztos font-bold px-8 py-3 border-2 border-white hover:bg-white uppercase tracking-widest text-xl">Volver al Ranking</Link>
+      <h1 className="text-4xl md:text-5xl font-black text-white mb-4 text-center uppercase tracking-widest">¡Top Secret!</h1>
+      <p className="text-gray-400 max-w-md text-center mb-10 text-lg">El bracket de <strong className="text-[#00e5ff] uppercase">{profile?.username}</strong> es secreto hasta que empiece el Mundial.</p>
+      <Link href="/ranking" className="bg-[#ccff00] text-black font-bold px-8 py-3 border-2 border-white hover:bg-white uppercase tracking-widest text-xl">Volver al Ranking</Link>
     </main>
   )
 
@@ -128,20 +128,20 @@ export default function PublicBracket() {
             {profile?.avatar_url ? (
               <Image src={profile.avatar_url} alt="Avatar" width={64} height={64} className="rounded-full border-2 border-white object-cover w-16 h-16" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#333] border-2 border-white flex items-center justify-center text-3xl font-sztos font-bold text-white">{profile?.username?.charAt(0).toUpperCase()}</div>
+              <div className="w-16 h-16 rounded-full bg-[#333] border-2 border-white flex items-center justify-center text-3xl font-bold text-white">{profile?.username?.charAt(0).toUpperCase()}</div>
             )}
             <div>
               <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Bracket Oficial de</p>
-              <h1 className="text-3xl md:text-4xl font-sztos font-bold text-white uppercase tracking-wider">{profile?.username}</h1>
+              <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-wider">{profile?.username}</h1>
             </div>
           </div>
-          <Link href="/ranking" className="bg-[#5500ff] text-white px-6 py-3 border-2 border-white hover:bg-white hover:text-black transition-colors font-sztos font-bold uppercase tracking-widest text-xl w-full md:w-auto text-center">Volver</Link>
+          <Link href="/ranking" className="bg-[#5500ff] text-white px-6 py-3 border-2 border-white hover:bg-white hover:text-black transition-colors font-bold uppercase tracking-widest text-xl w-full md:w-auto text-center">Volver</Link>
         </div>
 
         {!bracket ? (
           <div className="text-center py-24 bg-[#111] border-4 border-[#333] border-dashed">
             <span className="text-6xl mb-4 block opacity-50">👻</span>
-            <h2 className="text-3xl font-sztos font-bold text-gray-500 uppercase tracking-widest">Bracket Vacío</h2>
+            <h2 className="text-3xl font-black text-gray-500 uppercase tracking-widest">Bracket Vacío</h2>
           </div>
         ) : (
           <div className="w-full overflow-x-auto bg-[#0a0a0a] border-4 border-white shadow-[10px_10px_0px_#00e5ff] scrollbar-thin scrollbar-thumb-[#00e5ff] scrollbar-track-black p-4 md:p-8">
@@ -152,13 +152,13 @@ export default function PublicBracket() {
               {renderRoundColumn("SEMIS", 3, 0, 1)}
 
               <div className="flex flex-col justify-center items-center h-full w-48 shrink-0 px-2 relative">
-                <div className="text-center absolute top-12"><span className="text-6xl drop-shadow-[0_0_15px_#00e5ff]">🏆</span><h3 className="text-2xl font-sztos font-bold text-[#00e5ff] tracking-widest mt-2 uppercase">FINAL</h3></div>
+                <div className="text-center absolute top-12"><span className="text-6xl drop-shadow-[0_0_15px_#00e5ff]">🏆</span><h3 className="text-2xl font-black text-[#00e5ff] tracking-widest mt-2 uppercase">FINAL</h3></div>
                 <div className="w-full relative z-10"><MatchupNode match={getMatch(4, 0)} winner={bracket.knockout_picks[4]?.[0] || null} /></div>
                 <div className="absolute bottom-28 w-full flex flex-col items-center">
-                  <h4 className="text-white font-sztos font-bold text-xl mb-3 uppercase tracking-widest">CAMPEÓN</h4>
+                  <h4 className="text-white font-black text-xl mb-3 uppercase tracking-widest">CAMPEÓN</h4>
                   <div className={`border-4 p-4 flex flex-col items-center justify-center w-40 h-32 ${bracket.champion ? 'bg-[#5500ff]/20 border-[#5500ff] scale-110' : 'bg-black border-[#444] border-dashed'}`}>
                     <TeamFlag flag={bracket.knockout_picks[4]?.[0]?.flag} name={bracket.knockout_picks[4]?.[0]?.name} className="w-16 h-16 mb-2" />
-                    <span className="text-lg font-sztos font-bold text-white tracking-wider truncate w-full text-center uppercase">{bracket.champion?.substring(0, 3) || '???'}</span>
+                    <span className="text-lg font-bold text-white tracking-wider truncate w-full text-center uppercase">{bracket.champion?.substring(0, 3) || '???'}</span>
                   </div>
                 </div>
               </div>
@@ -188,12 +188,12 @@ function MatchupNode({ match, winner }: { match: Matchup, winner: Team | null })
     <div className="flex flex-col bg-black border-2 border-white w-full shrink-0 overflow-hidden shadow-sm cursor-default">
       <div className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t1)}`}>
         <TeamFlag flag={t1?.flag} name={t1?.name} className="w-6 h-6" />
-        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t1 ? t1.name.substring(0, 3) : 'TBD'}</span>
+        <span className="truncate font-bold text-sm md:text-base tracking-wider uppercase">{t1 ? t1.name.substring(0, 3) : 'TBD'}</span>
       </div>
       <div className="h-[2px] bg-white w-full" />
       <div className={`flex items-center gap-3 p-3 transition-colors ${getBtnClass(t2)}`}>
         <TeamFlag flag={t2?.flag} name={t2?.name} className="w-6 h-6" />
-        <span className="truncate font-sztos font-normal text-sm md:text-base tracking-wider uppercase">{t2 ? t2.name.substring(0, 3) : 'TBD'}</span>
+        <span className="truncate font-bold text-sm md:text-base tracking-wider uppercase">{t2 ? t2.name.substring(0, 3) : 'TBD'}</span>
       </div>
     </div>
   )
