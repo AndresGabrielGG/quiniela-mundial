@@ -28,6 +28,8 @@ interface GroupPrediction {
   };
 }
 
+type MatchTab = 'upcoming' | 'finished';
+
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [totalPoints, setTotalPoints] = useState(0)
@@ -38,6 +40,9 @@ export default function Dashboard() {
   const [groupPredictions, setGroupPredictions] = useState<GroupPrediction[]>([])
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
   
+  // NUEVO ESTADO PARA LA PESTAÑA ACTIVA
+  const [activeTab, setActiveTab] = useState<MatchTab>('upcoming')
+
   const router = useRouter()
 
   useEffect(() => {
@@ -143,13 +148,11 @@ export default function Dashboard() {
     }
   }
 
-  // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
   const activeOrUpcomingMatches = matches.filter(m => m.status !== 'finished')
   
   const finishedMatches = matches.filter(m => m.status === 'finished')
     .sort((a, b) => new Date(b.kickoff_time).getTime() - new Date(a.kickoff_time).getTime())
 
-  // --- FUNCIÓN RENDERIZADORA DE TARJETAS ---
   const renderMatchCard = (match: Match) => {
     const hasStarted = new Date(match.kickoff_time) < new Date()
     const pred = predictions[match.id] || { pred_a: '', pred_b: '' }
@@ -158,12 +161,10 @@ export default function Dashboard() {
     return (
       <div key={match.id} className="bg-[#0a0a0a] border-4 border-[#222] hover:border-white transition-colors flex flex-col overflow-hidden relative">
         
-        {/* LÍNEA DE COLOR SUPERIOR */}
         <div className="h-2 w-full bg-gradient-to-r from-[#5500ff] via-[#ff004d] to-[#00e5ff]" />
 
         <div className="p-4 md:p-6 flex flex-col xl:flex-row items-center justify-between gap-6">
           
-          {/* FECHA Y ESTADO */}
           <div className="w-full xl:w-48 shrink-0 flex flex-row xl:flex-col justify-between xl:justify-center items-center xl:items-start border-b-2 border-[#333] xl:border-none pb-3 xl:pb-0">
             <div className="font-black text-gray-400 uppercase tracking-widest text-sm xl:text-base">
               {new Date(match.kickoff_time).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} <span className="text-white mx-1">•</span> {new Date(match.kickoff_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
@@ -175,16 +176,13 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* EL MARCADOR TIPO BROADCAST TV */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center bg-[#111] border-2 border-white rounded-2xl md:rounded-full flex-1 max-w-2xl w-full justify-center shadow-lg overflow-hidden">
             
-            {/* EQUIPO A */}
             <div className="flex items-center justify-center md:justify-end gap-3 flex-1 py-3 px-4 bg-[#1a1a1a] md:bg-transparent border-b-2 md:border-b-0 md:border-r-2 border-[#333]">
               <span className="font-bold tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_a.substring(0, 3).toUpperCase()}</span>
               {match.home_logo && <img src={match.home_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
             </div>
             
-            {/* ZONA CENTRAL DE NÚMEROS */}
             <div className="flex items-center justify-center gap-3 px-6 py-4 bg-white border-y-2 md:border-y-0 border-white min-w-[160px]">
               {!hasStarted ? (
                 <>
@@ -209,14 +207,12 @@ export default function Dashboard() {
               )}
             </div>
             
-            {/* EQUIPO B */}
             <div className="flex items-center justify-center md:justify-start gap-3 flex-1 py-3 px-4 bg-[#1a1a1a] md:bg-transparent border-t-2 md:border-t-0 md:border-l-2 border-[#333]">
               {match.away_logo && <img src={match.away_logo} alt="logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-full p-0.5" />}
               <span className="font-bold tracking-wider text-2xl md:text-3xl text-white truncate max-w-[120px] md:max-w-none">{match.team_b.substring(0, 3).toUpperCase()}</span>
             </div>
           </div>
 
-          {/* ZONA DE BOTONES E INFORMACIÓN EXTRA */}
           <div className="w-full xl:w-48 shrink-0 flex flex-col items-center xl:items-end justify-center mt-2 xl:mt-0 gap-2">
             {hasStarted && (
               <div className="text-xs font-black uppercase text-white tracking-widest bg-[#333] px-3 py-1 rounded-full text-center">
@@ -239,7 +235,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* CAJA DE PREDICCIONES DE LOS AMIGOS */}
         {hasStarted && expandedMatch === match.id && (
           <div className="bg-[#111] p-6 border-t-4 border-[#222] flex flex-wrap gap-4">
             {matchGroupPreds.length > 0 ? (
@@ -313,7 +308,7 @@ export default function Dashboard() {
     <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto">
         
-        {/* CABECERA AL ESTILO 26 */}
+        {/* CABECERA */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111] border-4 border-white p-6 mb-8 gap-6 rounded-none shadow-[8px_8px_0px_#ccff00]">
           <div className="flex items-center gap-4">
             {user.user_metadata.avatar_url && (
@@ -356,33 +351,57 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* SECCIÓN 1: PRÓXIMOS Y EN VIVO */}
         <div className="flex justify-between items-end mb-6 border-b-4 border-white pb-3">
-          <h3 className="text-2xl md:text-4xl font-black text-white tracking-wide uppercase">Próximos y En Vivo</h3>
+          <h3 className="text-3xl md:text-4xl font-black text-white tracking-wide uppercase">Calendario Oficial</h3>
           <button onClick={saveAllPredictions} className="hidden md:block bg-[#ccff00] text-black font-black text-xl py-2 px-6 border-2 border-white hover:bg-white transition-colors">
             GUARDAR TODO
           </button>
         </div>
+
+        {/* --- PESTAÑAS (TABS) --- */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <button
+            onClick={() => setActiveTab('upcoming')}
+            className={`flex-1 py-4 px-6 border-4 border-white font-black text-lg md:text-xl uppercase tracking-widest transition-all ${
+              activeTab === 'upcoming'
+                ? 'bg-[#ccff00] text-black shadow-[6px_6px_0px_#ccff00]'
+                : 'bg-[#111] text-white hover:bg-[#222]'
+            }`}
+          >
+            Pendientes / En Vivo ({activeOrUpcomingMatches.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('finished')}
+            className={`flex-1 py-4 px-6 border-4 border-white font-black text-lg md:text-xl uppercase tracking-widest transition-all ${
+              activeTab === 'finished'
+                ? 'bg-[#00e5ff] text-black shadow-[6px_6px_0px_#00e5ff]'
+                : 'bg-[#111] text-white hover:bg-[#222]'
+            }`}
+          >
+            Finalizados ({finishedMatches.length})
+          </button>
+        </div>
         
+        {/* --- CONTENEDOR DE PARTIDOS --- */}
         <div className="flex flex-col gap-6 mb-12">
-          {activeOrUpcomingMatches.length > 0 ? (
-            activeOrUpcomingMatches.map(renderMatchCard)
+          {activeTab === 'upcoming' ? (
+            activeOrUpcomingMatches.length > 0 ? (
+              activeOrUpcomingMatches.map(renderMatchCard)
+            ) : (
+              <div className="bg-[#111] border-4 border-white p-12 text-center shadow-[8px_8px_0px_#ccff00]">
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xl md:text-2xl">No hay partidos pendientes 🏆</p>
+              </div>
+            )
           ) : (
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-center py-8">No hay partidos pendientes 🏆</p>
+            finishedMatches.length > 0 ? (
+              finishedMatches.map(renderMatchCard)
+            ) : (
+              <div className="bg-[#111] border-4 border-white p-12 text-center shadow-[8px_8px_0px_#00e5ff]">
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xl md:text-2xl">Aún no hay partidos finalizados 🏁</p>
+              </div>
+            )
           )}
         </div>
-
-        {/* SECCIÓN 2: FINALIZADOS */}
-        {finishedMatches.length > 0 && (
-          <>
-            <div className="flex justify-between items-end mb-6 border-b-4 border-white pb-3">
-              <h3 className="text-2xl md:text-4xl font-black text-[#00e5ff] tracking-wide uppercase">Finalizados</h3>
-            </div>
-            <div className="flex flex-col gap-6 mb-12">
-              {finishedMatches.map(renderMatchCard)}
-            </div>
-          </>
-        )}
 
         <button 
           onClick={saveAllPredictions} 
