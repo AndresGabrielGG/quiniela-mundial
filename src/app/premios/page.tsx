@@ -84,41 +84,44 @@ export default function Premios() {
     }
   }
 
-  if (loading) return <p className="min-h-screen bg-slate-900 text-white p-8">Cargando premios...</p>
+  if (loading) return <p className="min-h-screen bg-black text-[#00e5ff] flex items-center justify-center font-black text-3xl tracking-widest animate-pulse">CARGANDO...</p>
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-8">
-      <div className="max-w-2xl mx-auto">
+    <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
+      <div className="max-w-3xl mx-auto">
         
-        {/* Navegación */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-amber-400">Premios Finales 🌟</h1>
-          <Link href="/dashboard" className="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors border border-slate-600">
+        {/* NAVEGACIÓN */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b-4 border-white pb-4">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-wide">
+            Premios <span className="text-[#ff004d]">Finales</span>
+          </h1>
+          <Link href="/dashboard" className="bg-[#ccff00] text-black px-6 py-2 border-2 border-white hover:bg-white transition-colors w-full md:w-auto text-center font-bold uppercase tracking-wider text-xl">
             Volver
           </Link>
         </div>
 
-        <div className="bg-slate-800 p-6 md:p-8 rounded-xl border border-slate-700 shadow-xl">
+        <div className="bg-[#111] p-6 md:p-10 border-4 border-white shadow-[10px_10px_0px_#00e5ff]">
           {isLocked && (
-            <div className="bg-red-900/20 border border-red-800 text-red-300 p-4 rounded-lg mb-6 text-center">
-              El torneo ya ha comenzado. Estas predicciones están bloqueadas 🔒
+            <div className="bg-[#ff004d] text-white p-4 border-4 border-white mb-8 text-center font-bold text-xl uppercase tracking-widest shadow-[6px_6px_0px_#fff]">
+              EL TORNEO HA COMENZADO. ESTAS PREDICCIONES ESTÁN BLOQUEADAS 🔒
             </div>
           )}
 
-          <div className="flex flex-col gap-6">
-            <AwardInput label="🏆 Campeón del Mundo" value={awards.champion} onChange={(v: string) => handleChange('champion', v)} disabled={isLocked} placeholder="Selecciona un país" options={WORLD_CUP_TEAMS} />
-            <AwardInput label="🥈 Subcampeón" value={awards.runner_up} onChange={(v: string) => handleChange('runner_up', v)} disabled={isLocked} placeholder="Selecciona un país" options={WORLD_CUP_TEAMS} />
-            <AwardInput label="⭐ Balón de Oro (Mejor Jugador)" value={awards.mvp} onChange={(v: string) => handleChange('mvp', v)} disabled={isLocked} placeholder="Ej: Lionel Messi" />
-            <AwardInput label="⚽ Bota de Oro (Goleador)" value={awards.golden_boot} onChange={(v: string) => handleChange('golden_boot', v)} disabled={isLocked} placeholder="Ej: Kylian Mbappé" />
-            <AwardInput label="🧤 Guante de Oro (Mejor Portero)" value={awards.golden_glove} onChange={(v: string) => handleChange('golden_glove', v)} disabled={isLocked} placeholder="Ej: Dibu Martínez" />
+          <div className="flex flex-col gap-8">
+            <AwardInput label="🏆 Campeón del Mundo" color="#ccff00" value={awards.champion} onChange={(v: string) => handleChange('champion', v)} disabled={isLocked} placeholder="Selecciona un país" options={WORLD_CUP_TEAMS} />
+            <AwardInput label="🥈 Subcampeón" color="#00e5ff" value={awards.runner_up} onChange={(v: string) => handleChange('runner_up', v)} disabled={isLocked} placeholder="Selecciona un país" options={WORLD_CUP_TEAMS} />
+            <div className="h-1 w-full bg-[#333] my-2" /> {/* Separador visual */}
+            <AwardInput label="⭐ Balón de Oro (Mejor Jugador)" color="#ff004d" value={awards.mvp} onChange={(v: string) => handleChange('mvp', v)} disabled={isLocked} placeholder="Ej: Lionel Messi" />
+            <AwardInput label="⚽ Bota de Oro (Goleador)" color="#5500ff" value={awards.golden_boot} onChange={(v: string) => handleChange('golden_boot', v)} disabled={isLocked} placeholder="Ej: Kylian Mbappé" />
+            <AwardInput label="🧤 Guante de Oro (Mejor Portero)" color="#ff5500" value={awards.golden_glove} onChange={(v: string) => handleChange('golden_glove', v)} disabled={isLocked} placeholder="Ej: Dibu Martínez" />
           </div>
 
           {!isLocked && (
             <button 
               onClick={handleSave}
-              className="mt-8 w-full bg-amber-500 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-amber-400 transition-colors text-lg"
+              className="mt-12 w-full bg-[#ccff00] text-black font-black uppercase tracking-widest py-4 px-6 border-4 border-white shadow-[6px_6px_0px_#fff] hover:bg-white hover:translate-y-1 hover:shadow-none transition-all text-xl md:text-2xl"
             >
-              Guardar Predicciones
+              GUARDAR PREDICCIONES
             </button>
           )}
         </div>
@@ -127,44 +130,46 @@ export default function Premios() {
     </main>
   )
 }
+
 // Interfaz actualizada
 interface AwardInputProps {
   label: string;
+  color: string; // Nuevo prop para darle acentos de color dinámicos
   value: string;
   onChange: (value: string) => void;
   disabled: boolean;
   placeholder: string;
-  options?: string[]; // Hacemos que sea opcional usando el signo de interrogación
+  options?: string[];
 }
 
-// Componente inteligente
-function AwardInput({ label, value, onChange, disabled, placeholder, options }: AwardInputProps) {
+// Componente inteligente rediseñado
+function AwardInput({ label, color, value, onChange, disabled, placeholder, options }: AwardInputProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-lg font-semibold text-slate-300">{label}</label>
+    <div className="flex flex-col gap-3">
+      <label className="text-xl md:text-2xl font-black uppercase tracking-widest" style={{ color: color }}>
+        {label}
+      </label>
       
       {options ? (
-        // Si le pasamos opciones, dibuja un menú desplegable
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-amber-500 outline-none disabled:bg-slate-950 disabled:text-slate-500 appearance-none cursor-pointer"
+          className="bg-black border-4 border-[#333] p-4 text-white font-bold text-lg md:text-xl uppercase tracking-wider focus:border-white outline-none disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer transition-colors"
         >
-          <option value="" disabled>{placeholder}</option>
+          <option value="" disabled className="text-gray-500">{placeholder}</option>
           {options.map((team) => (
             <option key={team} value={team}>{team}</option>
           ))}
         </select>
       ) : (
-        // Si NO le pasamos opciones, dibuja el cuadro de texto normal
         <input 
           type="text" 
           value={value} 
           onChange={(e) => onChange(e.target.value)} 
           disabled={disabled}
           placeholder={placeholder}
-          className="bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-amber-500 outline-none disabled:bg-slate-950 disabled:text-slate-500"
+          className="bg-black border-4 border-[#333] p-4 text-white font-bold text-lg md:text-xl uppercase tracking-wider focus:border-white outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors placeholder:text-gray-600"
         />
       )}
     </div>
