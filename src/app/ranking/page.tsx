@@ -16,16 +16,12 @@ interface Profile {
   points_premios: number
 }
 
-// NUEVO ORDEN LÓGICO
 type TabCategory = 'quiniela' | 'total' | 'bracket' | 'premios'
 
 export default function Ranking() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
-  
-  // POR DEFECTO: La pestaña de Quiniela arranca primero
   const [activeTab, setActiveTab] = useState<TabCategory>('quiniela')
-  
   const router = useRouter()
 
   useEffect(() => {
@@ -70,7 +66,7 @@ export default function Ranking() {
           </Link>
         </div>
 
-        {/* --- PESTAÑAS (NUEVO ORDEN: QUINIELA PRIMERO) --- */}
+        {/* --- PESTAÑAS --- */}
         <div className="flex overflow-x-auto bg-black border-4 border-white border-b-0 hide-scrollbar">
           <button 
             onClick={() => setActiveTab('quiniela')}
@@ -109,12 +105,16 @@ export default function Ranking() {
               {profiles.map((profile, index) => {
                 const points = getDisplayPoints(profile)
                 
+                // CAMBIO RESPONSIVO DE RUTA: Redirige según la categoría visualizada
+                const targetPath = activeTab === 'quiniela' ? `/quiniela/${profile.id}` : `/bracket/${profile.id}`
+                const labelSubtext = activeTab === 'quiniela' ? 'Ver Pronósticos 👀' : 'Ver Bracket 🌳'
+
                 return (
                   <div 
                     key={profile.id}
-                    onClick={() => router.push(`/bracket/${profile.id}`)}
+                    onClick={() => router.push(targetPath)}
                     className={`flex items-center justify-between p-4 md:p-6 border-b-4 border-[#333] last:border-b-0 cursor-pointer hover:bg-[#1a1a1a] transition-colors group ${index === 0 ? 'bg-[#ccff00]/5' : ''}`}
-                    title="Ver Bracket"
+                    title={labelSubtext}
                   >
                     <div className="flex items-center gap-4 md:gap-6">
                       <span className={`font-black text-3xl md:text-4xl w-8 text-center ${index === 0 ? 'text-[#ccff00]' : index === 1 ? 'text-[#00e5ff]' : index === 2 ? 'text-[#ff004d]' : 'text-gray-500'}`}>
@@ -133,7 +133,7 @@ export default function Ranking() {
                         <span className="text-xl md:text-2xl font-bold uppercase tracking-wider group-hover:text-[#ccff00] transition-colors">
                           {profile.username}
                         </span>
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest md:hidden">VER BRACKET ➔</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest md:hidden">{labelSubtext} ➔</span>
                       </div>
                     </div>
                     
