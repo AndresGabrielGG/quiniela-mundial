@@ -43,6 +43,7 @@ export default function BracketPredictor() {
   const [groups, setGroups] = useState<Record<string, Team[]>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [officialGroups, setOfficialGroups] = useState<Record<string, Team[]> | null>(null)
   
   const [selectedThirds, setSelectedThirds] = useState<Team[]>([])
   const [roundOf32, setRoundOf32] = useState<Matchup[]>([])
@@ -57,6 +58,7 @@ export default function BracketPredictor() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
 
+      // Cargar equipos base
       const { data: teamsData, error } = await supabase.from('teams').select('*').order('group_letter', { ascending: true })
       let currentGroups: Record<string, Team[]> = {}
       
@@ -68,6 +70,13 @@ export default function BracketPredictor() {
         setGroups(currentGroups)
       }
 
+      // Cargar resultados oficiales (si existen)
+      const { data: officialData } = await supabase.from('official_bracket').select('group_standings').eq('id', 1).single()
+      if (officialData && officialData.group_standings) {
+        setOfficialGroups(officialData.group_standings)
+      }
+
+      // Cargar el bracket guardado del usuario
       const { data: userBracket } = await supabase.from('brackets').select('*').eq('user_id', session.user.id).single()
       
       if (userBracket) {
@@ -248,31 +257,70 @@ export default function BracketPredictor() {
         {Object.keys(groups).length > 0 && (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10 px-2">
-              {Object.entries(groups).map(([letter, teams]) => (
-                <div key={letter} className="bg-[#111] p-4 border-4 border-[#222] shadow-[6px_6px_0px_#00e5ff]">
-                  <h3 className="text-xl font-black text-[#00e5ff] mb-3 border-b-2 border-[#333] pb-2 uppercase tracking-widest">Grupo {letter}</h3>
-                  <Droppable droppableId={letter} isDropDisabled={isLocked}>
-                    {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-2 min-h-[140px]">
-                        {teams.map((team, idx) => (
-                          <Draggable key={team.name} draggableId={team.name} index={idx} isDragDisabled={isLocked}>
-                            {(provided, snapshot) => (
-                              <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}
-                                className={`flex items-center gap-3 p-2 border-2 transition-all ${snapshot.isDragging ? 'bg-[#111] border-[#ccff00] z-50 shadow-[4px_4px_0px_#ccff00]' : 'bg-black border-[#444]'} ${idx < 2 && !snapshot.isDragging ? 'border-[#00e5ff]' : idx === 2 && !snapshot.isDragging ? 'border-[#ff5500]' : ''} ${isLocked ? 'opacity-80 cursor-not-allowed' : ''}`}>
-                                <span className={`font-black w-6 text-center text-xl ${idx < 2 ? 'text-[#00e5ff]' : idx === 2 ? 'text-[#ff5500]' : 'text-gray-500'}`}>{idx + 1}</span>
-                                <TeamFlag flag={team.flag} name={team.name} />
-                                <span className="flex-1 truncate font-bold text-lg tracking-wider uppercase">{team.name.substring(0, 3)}</span>
-                                {!isLocked && <span className="text-gray-600 cursor-grab px-1 text-xl">≡</span>}
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </div>
-              ))}
+              {Object.entries(groups).map(([letter, teams]) => {
+                
+                // Lógica de calificación si el torneo ya empezó
+                let isGroupPerfect = false;
+                if (isLocked && officialGroups && officialGroups[letter]) {
+                  const officialTeamNames = officialGroups[letter].map(t => t.name);
+                  const userTeamNames = teams.map(t => t.name);
+                  if (officialTeamNames.join(',') === userTeamNames.join(',')) {
+                    isGroupPerfect = true;
+                  }
+                }
+
+                return (
+                  <div key={letter} className={`bg-[#111] p-4 border-4 shadow-[6px_6px_0px_#00e5ff] ${isLocked && isGroupPerfect ? 'border-[#ccff00] shadow-[6px_6px_0px_#ccff00]' : isLocked ? 'border-[#222] shadow-[6px_6px_0px_#ff004d]' : 'border-[#222]'}`}>
+                    <div className="flex justify-between items-center mb-3 border-b-2 border-[#333] pb-2">
+                      <h3 className="text-xl font-black text-[#00e5ff] uppercase tracking-widest">Grupo {letter}</h3>
+                      {isLocked && isGroupPerfect && officialGroups && (
+                        <span className="bg-[#ccff00] text-black text-xs font-black px-2 py-1">+5 PTS</span>
+                      )}
+                    </div>
+                    
+                    <Droppable droppableId={letter} isDropDisabled={isLocked}>
+                      {(provided) => (
+                        <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-2 min-h-[140px]">
+                          {teams.map((team, idx) => {
+                            
+                            // Color por defecto mientras no empiece
+                            let positionStatusColor = idx < 2 ? 'text-[#00e5ff]' : idx === 2 ? 'text-[#ff5500]' : 'text-gray-500';
+                            
+                            // Si está bloqueado y hay datos oficiales, calificar
+                            if (isLocked) {
+                              if (officialGroups && officialGroups[letter]) {
+                                const officialTeamInThisPosition = officialGroups[letter][idx]?.name;
+                                if (officialTeamInThisPosition === team.name) {
+                                  positionStatusColor = 'text-[#ccff00]'; 
+                                } else {
+                                  positionStatusColor = 'text-[#ff004d]'; 
+                                }
+                              } else {
+                                positionStatusColor = 'text-gray-500';
+                              }
+                            }
+
+                            return (
+                              <Draggable key={team.name} draggableId={team.name} index={idx} isDragDisabled={isLocked}>
+                                {(provided, snapshot) => (
+                                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}
+                                    className={`flex items-center gap-3 p-2 border-2 transition-all ${snapshot.isDragging ? 'bg-[#111] border-[#ccff00] z-50 shadow-[4px_4px_0px_#ccff00]' : 'bg-black border-[#444]'} ${!isLocked && idx < 2 && !snapshot.isDragging ? 'border-[#00e5ff]' : !isLocked && idx === 2 && !snapshot.isDragging ? 'border-[#ff5500]' : ''}`}>
+                                    <span className={`font-black w-6 text-center text-xl ${positionStatusColor}`}>{idx + 1}</span>
+                                    <TeamFlag flag={team.flag} name={team.name} />
+                                    <span className="flex-1 truncate font-bold text-lg tracking-wider uppercase">{team.name.substring(0, 3)}</span>
+                                    {!isLocked && <span className="text-gray-600 cursor-grab px-1 text-xl">≡</span>}
+                                  </div>
+                                )}
+                              </Draggable>
+                            )
+                          })}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </div>
+                )
+              })}
             </div>
           </DragDropContext>
         )}

@@ -32,7 +32,10 @@ type MatchTab = 'upcoming' | 'finished';
 
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
-  const [totalPoints, setTotalPoints] = useState(0)
+  
+  // NUEVO ESTADO: Desglose de puntos completo
+  const [points, setPoints] = useState({ total: 0, quiniela: 0, bracket: 0, premios: 0 })
+  
   const [role, setRole] = useState<string>('user')
   const [matches, setMatches] = useState<Match[]>([])
   const [predictions, setPredictions] = useState<Record<string, { pred_a: string, pred_b: string }>>({})
@@ -40,7 +43,6 @@ export default function Dashboard() {
   const [groupPredictions, setGroupPredictions] = useState<GroupPrediction[]>([])
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
   
-  // NUEVO ESTADO PARA LA PESTAÑA ACTIVA
   const [activeTab, setActiveTab] = useState<MatchTab>('upcoming')
 
   const router = useRouter()
@@ -54,9 +56,20 @@ export default function Dashboard() {
       }
       setUser(session.user)
       
-      const { data: profile } = await supabase.from('profiles').select('total_points, role').eq('id', session.user.id).single()
+      // NUEVO: Extraemos todas las columnas de puntos
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('total_points, points_quiniela, points_bracket, points_premios, role')
+        .eq('id', session.user.id)
+        .single()
+
       if (profile) {
-        setTotalPoints(profile.total_points)
+        setPoints({
+          total: profile.total_points || 0,
+          quiniela: profile.points_quiniela || 0,
+          bracket: profile.points_bracket || 0,
+          premios: profile.points_premios || 0
+        })
         setRole(profile.role)
       }
 
@@ -308,15 +321,26 @@ export default function Dashboard() {
     <main className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto">
         
-        {/* CABECERA */}
+        {/* CABECERA (Ahora con desglose de puntos) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111] border-4 border-white p-6 mb-8 gap-6 rounded-none shadow-[8px_8px_0px_#ccff00]">
           <div className="flex items-center gap-4">
             {user.user_metadata.avatar_url && (
               <Image src={user.user_metadata.avatar_url} alt="Avatar" width={56} height={56} className="border-2 border-white object-cover rounded-full" />
             )}
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-wider">{user.user_metadata.full_name}</h2>
-              <p className="text-[#ccff00] font-black text-lg mt-1">{totalPoints} PTS</p>
+              <h2 className="text-2xl font-black uppercase tracking-wider leading-none">{user.user_metadata.full_name}</h2>
+              
+              {/* DESGLOSE DETALLADO DE PUNTOS */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2 font-bold text-sm">
+                <span className="text-[#ccff00] text-xl md:text-2xl tracking-widest">{points.total} PTS</span>
+                <span className="text-gray-600 hidden md:inline text-lg">|</span>
+                <div className="flex gap-2 text-[10px] md:text-xs tracking-widest uppercase">
+                  <span className="text-[#00e5ff] bg-[#00e5ff]/10 border border-[#00e5ff]/50 px-2 py-1 rounded">Quiniela: {points.quiniela}</span>
+                  <span className="text-[#5500ff] bg-[#5500ff]/10 border border-[#5500ff]/50 px-2 py-1 rounded">Bracket: {points.bracket}</span>
+                  <span className="text-[#ff004d] bg-[#ff004d]/10 border border-[#ff004d]/50 px-2 py-1 rounded">Premios: {points.premios}</span>
+                </div>
+              </div>
+
             </div>
           </div>
           

@@ -16,12 +16,16 @@ interface Profile {
   points_premios: number
 }
 
-type TabCategory = 'total' | 'quiniela' | 'bracket' | 'premios'
+// NUEVO ORDEN LÓGICO
+type TabCategory = 'quiniela' | 'total' | 'bracket' | 'premios'
 
 export default function Ranking() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<TabCategory>('total')
+  
+  // POR DEFECTO: La pestaña de Quiniela arranca primero
+  const [activeTab, setActiveTab] = useState<TabCategory>('quiniela')
+  
   const router = useRouter()
 
   useEffect(() => {
@@ -66,19 +70,19 @@ export default function Ranking() {
           </Link>
         </div>
 
-        {/* --- PESTAÑAS (TABS BRUTALISTAS) --- */}
+        {/* --- PESTAÑAS (NUEVO ORDEN: QUINIELA PRIMERO) --- */}
         <div className="flex overflow-x-auto bg-black border-4 border-white border-b-0 hide-scrollbar">
-          <button 
-            onClick={() => setActiveTab('total')}
-            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'total' ? 'bg-[#ccff00] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
-          >
-            General
-          </button>
           <button 
             onClick={() => setActiveTab('quiniela')}
             className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'quiniela' ? 'bg-[#00e5ff] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
           >
             Quiniela
+          </button>
+          <button 
+            onClick={() => setActiveTab('total')}
+            className={`flex-1 py-4 px-4 text-sm md:text-lg font-bold uppercase tracking-wider whitespace-nowrap border-r-4 border-white transition-colors ${activeTab === 'total' ? 'bg-[#ccff00] text-black' : 'bg-[#111] text-white hover:bg-[#222]'}`}
+          >
+            General
           </button>
           <button 
             onClick={() => setActiveTab('bracket')}
