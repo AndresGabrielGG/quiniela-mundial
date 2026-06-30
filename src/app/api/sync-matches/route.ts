@@ -10,7 +10,7 @@ interface FDataMatch {
   score: {
     fullTime?: { home: number | null; away: number | null };
     regularTime?: { home: number | null; away: number | null };
-    extraTime?: { home: number | null; away: number | null }; // Añadimos la prórroga
+    extraTime?: { home: number | null; away: number | null };
   };
 }
 
@@ -36,44 +36,41 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "No se encontraron partidos" }, { status: 400 });
     }
 
-    // 1. TRAER PARTIDOS ACTUALES DE LA BD PARA COMPARAR
     const { data: existingMatches } = await supabase
       .from('matches')
       .select('api_fixture_id, score_a, score_b');
 
     let hayPartidosTerminados = false;
 
-    // 2. FORMATEAMOS LOS DATOS
     const matchesToInsert = data.matches.map((match: FDataMatch) => {
       const teamA = match.homeTeam?.name || 'Por definir';
       const teamB = match.awayTeam?.name || 'Por definir';
       const logoA = match.homeTeam?.crest || '';
       const logoB = match.awayTeam?.crest || '';
       
-      // --- FILTRO ANTI-PENALES ---
       let apiScoreA: number | null | undefined = null;
       let apiScoreB: number | null | undefined = null;
 
-      // Prioridad 1: Marcador al finalizar la prórroga (120 min)
-      if (match.score?.extraTime && match.score.extraTime.home !== null) {
-        apiScoreA = match.score.extraTime.home;
-        apiScoreB = match.score.extraTime.away;
-      } 
-      // Prioridad 2: Marcador al finalizar el tiempo regular (90 min)
-      else if (match.score?.regularTime && match.score.regularTime.home !== null) {
+      // --- LA MAGIA MATEMÁTICA PARA LA QUINIELA ---
+      if (match.score?.regularTime && match.score.regularTime.home !== null && match.score.regularTime.away) {
+        // 1. Tomamos los goles de los 90 minutos
         apiScoreA = match.score.regularTime.home;
         apiScoreB = match.score.regularTime.away;
+
+        // 2. Si hubo prórroga, LE SUMAMOS los goles que ocurrieron en esos 30 minutos
+        if (match.score?.extraTime && match.score.extraTime.home !== null && match.score.extraTime.away !== null) {
+          apiScoreA += match.score.extraTime.home;
+          apiScoreB += match.score.extraTime.away;
+        }
       } 
-      // Prioridad 3: Fallback (Solo por si la API omite los otros y manda fullTime directo)
-      else {
-        apiScoreA = match.score?.fullTime?.home ?? null;
-        apiScoreB = match.score?.fullTime?.away ?? null;
+      // 3. Fallback (por si acaso la API omite regularTime)
+      else if (match.score?.fullTime && match.score.fullTime.home !== null) {
+        apiScoreA = match.score.fullTime.home;
+        apiScoreB = match.score.fullTime.away;
       }
       
-      // BUSCAMOS SI YA TENÍAMOS DATOS EN NUESTRA BD
       const existingMatch = existingMatches?.find(m => m.api_fixture_id === match.id);
 
-      // EL ESCUDO ANTI-NULL: Si la API trae null pero tú pusiste un número, conservamos tu número.
       if (apiScoreA === null && existingMatch?.score_a !== null && existingMatch?.score_a !== undefined) {
         apiScoreA = existingMatch.score_a;
       }
@@ -83,7 +80,6 @@ export async function GET(request: Request) {
       
       const status = match.status === 'FINISHED' ? 'finished' : 'pending';
 
-      // Avisamos si este robot acaba de encontrar un partido que finalizó (y que ya tiene goles válidos)
       if (status === 'finished' && apiScoreA !== null && apiScoreB !== null) {
         hayPartidosTerminados = true;
       }
@@ -103,14 +99,12 @@ export async function GET(request: Request) {
       };
     });
 
-    // 3. GUARDAMOS EN LA BASE DE DATOS
     const { error } = await supabase
       .from('matches')
       .upsert(matchesToInsert, { onConflict: 'api_fixture_id' });
 
     if (error) throw error;
 
-    // 4. EL ARREGLO DE LOS PUNTOS: Auto-cálculo si hay partidos terminados
     if (hayPartidosTerminados) {
       const calculateUrl = `${url.origin}/api/calculate-points?secret=${secret}`;
       fetch(calculateUrl).catch(e => console.error("Error al autocalcular puntos:", e));
@@ -118,7 +112,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Sincronización exitosa! Se procesaron ${matchesToInsert.length} partidos, filtrando resultados de penales.` 
+      message: `¡Sincronización exitosa! Se procesaron ${matchesToInsert.length} partidos, sumando prórrogas y evadiendo penales.` 
     });
 
   } catch (error) {
