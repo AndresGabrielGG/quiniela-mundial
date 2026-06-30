@@ -34,6 +34,8 @@ const solveThirdPlaceMatrix = (thirds: Team[]): Team[] => {
 
 export default function AdminPanel() {
   const router = useRouter()
+  // PROTECCIÓN CONTRA CRASH DE NEXT.JS
+  const [isBrowser, setIsBrowser] = useState(false)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -53,6 +55,9 @@ export default function AdminPanel() {
   ];
 
   useEffect(() => {
+    // Activamos el renderizado seguro
+    const timer = setTimeout(() => setIsBrowser(true), 0)
+
     const initAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
@@ -97,6 +102,7 @@ export default function AdminPanel() {
       setLoading(false)
     }
     initAdmin()
+    return () => clearTimeout(timer)
   }, [router])
 
   const handleApiSync = async () => {
@@ -106,7 +112,7 @@ export default function AdminPanel() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Error al conectar con la API de sincronización.")
       alert("✅ " + data.message)
-    } catch (error: unknown) { // CORRECCIÓN DE TYPESCRIPT
+    } catch (error: unknown) {
       if (error instanceof Error) {
         alert("Aviso de Sincronización: " + error.message)
       } else {
@@ -231,7 +237,7 @@ export default function AdminPanel() {
       }
 
       alert(`✅ ¡Recálculo Exitoso!\nSe han corregido y distribuido correctamente los puntos de los ${count} usuarios de la plataforma.`)
-    } catch (error: unknown) { // CORRECCIÓN DE TYPESCRIPT
+    } catch (error: unknown) {
       if (error instanceof Error) {
         alert("Error al recalcular: " + error.message)
       } else {
@@ -287,14 +293,18 @@ export default function AdminPanel() {
     setPicks(newPicks)
   }
 
+  // AQUÍ ESTABA EL ERROR (Faltaban los signos de interrogación para proteger de datos vacíos)
   const getMatch = (roundIndex: number, matchIndex: number): Matchup => {
     if (roundIndex === 0) return roundOf32[matchIndex] || {team1: null, team2: null}
-    return { team1: picks[roundIndex - 1][matchIndex * 2] || null, team2: picks[roundIndex - 1][matchIndex * 2 + 1] || null }
+    return { 
+      team1: picks[roundIndex - 1]?.[matchIndex * 2] || null, 
+      team2: picks[roundIndex - 1]?.[matchIndex * 2 + 1] || null 
+    }
   }
 
   const renderRoundColumn = (title: string, roundIndex: number, startIndex: number, count: number) => (
-    <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-32 md:w-36 lg:w-40 xl:w-44 px-2">
-      <div className="text-center font-black text-[#00e5ff] mb-2 uppercase tracking-widest text-sm h-6">{title}</div>
+    <div key={title + startIndex} className="flex flex-col h-full shrink-0 w-28 md:w-32 lg:w-32 xl:w-36 px-1 lg:px-2">
+      <div className="text-center font-bold text-slate-500 mb-2 uppercase tracking-wider text-[10px] xl:text-xs h-5">{title}</div>
       <div className="flex flex-col justify-around flex-1 py-8">
         {Array.from({length: count}).map((_, i) => (
           <div key={i} className="flex items-center justify-center w-full">
@@ -312,6 +322,7 @@ export default function AdminPanel() {
     </div>
   )
 
+  if (!isBrowser) return null
   if (loading) return <div className="min-h-screen bg-black text-[#00e5ff] flex items-center justify-center font-black text-3xl tracking-widest animate-pulse">VERIFICANDO...</div>
 
   return (
