@@ -10,6 +10,7 @@ interface FDataMatch {
   score: {
     fullTime?: { home: number | null; away: number | null };
     regularTime?: { home: number | null; away: number | null };
+    extraTime?: { home: number | null; away: number | null }; // Añadimos la prórroga
   };
 }
 
@@ -35,24 +36,41 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "No se encontraron partidos" }, { status: 400 });
     }
 
-    // 1. TRAER PARTIDOS ACTUALES DE LA BASE DE DATOS PARA COMPARAR
+    // 1. TRAER PARTIDOS ACTUALES DE LA BD PARA COMPARAR
     const { data: existingMatches } = await supabase
       .from('matches')
       .select('api_fixture_id, score_a, score_b');
 
     let hayPartidosTerminados = false;
 
-    // 2. Formateamos los datos
+    // 2. FORMATEAMOS LOS DATOS
     const matchesToInsert = data.matches.map((match: FDataMatch) => {
       const teamA = match.homeTeam?.name || 'Por definir';
       const teamB = match.awayTeam?.name || 'Por definir';
       const logoA = match.homeTeam?.crest || '';
       const logoB = match.awayTeam?.crest || '';
       
-      let apiScoreA = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? null;
-      let apiScoreB = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? null;
+      // --- FILTRO ANTI-PENALES ---
+      let apiScoreA: number | null | undefined = null;
+      let apiScoreB: number | null | undefined = null;
+
+      // Prioridad 1: Marcador al finalizar la prórroga (120 min)
+      if (match.score?.extraTime && match.score.extraTime.home !== null) {
+        apiScoreA = match.score.extraTime.home;
+        apiScoreB = match.score.extraTime.away;
+      } 
+      // Prioridad 2: Marcador al finalizar el tiempo regular (90 min)
+      else if (match.score?.regularTime && match.score.regularTime.home !== null) {
+        apiScoreA = match.score.regularTime.home;
+        apiScoreB = match.score.regularTime.away;
+      } 
+      // Prioridad 3: Fallback (Solo por si la API omite los otros y manda fullTime directo)
+      else {
+        apiScoreA = match.score?.fullTime?.home ?? null;
+        apiScoreB = match.score?.fullTime?.away ?? null;
+      }
       
-      // BUSCAMOS SI YA TENÍAMOS DATOS EN NUESTRA BASE DE DATOS
+      // BUSCAMOS SI YA TENÍAMOS DATOS EN NUESTRA BD
       const existingMatch = existingMatches?.find(m => m.api_fixture_id === match.id);
 
       // EL ESCUDO ANTI-NULL: Si la API trae null pero tú pusiste un número, conservamos tu número.
@@ -85,14 +103,14 @@ export async function GET(request: Request) {
       };
     });
 
-    // 3. Guardamos en la Base de Datos
+    // 3. GUARDAMOS EN LA BASE DE DATOS
     const { error } = await supabase
       .from('matches')
       .upsert(matchesToInsert, { onConflict: 'api_fixture_id' });
 
     if (error) throw error;
 
-    // 4. EL ARREGLO DE LOS PUNTOS: Si hay partidos terminados y con goles, llamamos automáticamente a la API de puntos
+    // 4. EL ARREGLO DE LOS PUNTOS: Auto-cálculo si hay partidos terminados
     if (hayPartidosTerminados) {
       const calculateUrl = `${url.origin}/api/calculate-points?secret=${secret}`;
       fetch(calculateUrl).catch(e => console.error("Error al autocalcular puntos:", e));
@@ -100,7 +118,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Sincronización exitosa! Se procesaron ${matchesToInsert.length} partidos y los marcadores están actualizados.` 
+      message: `¡Sincronización exitosa! Se procesaron ${matchesToInsert.length} partidos, filtrando resultados de penales.` 
     });
 
   } catch (error) {
